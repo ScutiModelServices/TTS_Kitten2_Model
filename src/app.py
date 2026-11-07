@@ -377,7 +377,10 @@ def create_app(client: Kitten2Engine | None = None, admin_password: str | None =
 
 
 def main() -> None:
+    from dotenv import load_dotenv
     import uvicorn
+
+    load_dotenv(Path(__file__).resolve().parents[1] / ".env")  # a real environment variable wins over .env
 
     store = TokenStore(os.environ.get("KITTEN2_TOKENS_FILE", "tokens.json"))
     config = settings.Config(store.settings_path, SETTINGS)
