@@ -24,14 +24,14 @@ On macOS the CPU build of torch comes from PyPI; this was not tried here.
 
 | Variable | Default | Effect |
 |---|---|---|
-| `KITTEN2_HOST` | `127.0.0.1` | Bind address. Use `0.0.0.0` only if other devices must reach it. |
-| `KITTEN2_PORT` | `29323` | Port. |
-| `KITTEN2_ADMIN_PASSWORD` | empty | Unlocks `/admin/` and requires tokens on every call but `/health`. Empty = no auth. |
-| `KITTEN2_WARM` | `1` | Load the model at start; with `0` the first request pays the load time. |
-| `KITTEN2_DEVICE` | `cpu` | `cuda` only with a GPU and a CUDA build of torch (the lock file pins the CPU build). |
+| `SERVICE_HOST` | `127.0.0.1` | Bind address. Use `0.0.0.0` only if other devices must reach it. |
+| `SERVICE_PORT` | `29323` | Port. |
+| `SERVICE_ADMIN_PASSWORD` | empty | Unlocks `/admin/` and requires tokens on every call but `/health`. Empty = no auth. |
+| `SERVICE_WARM` | `1` | Load the model at start; with `0` the first request pays the load time. |
+| `SERVICE_DEVICE` | `cpu` | `cuda` only with a GPU and a CUDA build of torch (the lock file pins the CPU build). |
 
-PowerShell: `$env:KITTEN2_ADMIN_PASSWORD = "secret"; .\run.bat`
-Bash: `KITTEN2_ADMIN_PASSWORD=secret uv run python src/app.py`
+PowerShell: `$env:SERVICE_ADMIN_PASSWORD = "secret"; .\run.bat`
+Bash: `SERVICE_ADMIN_PASSWORD=secret uv run python src/app.py`
 
 ## Check
 ```bash

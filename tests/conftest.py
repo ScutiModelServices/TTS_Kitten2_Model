@@ -9,8 +9,8 @@ WAV = b"RIFF" + b"\0" * 4 + b"WAVE" + b"\0" * 32  # passes the store's header ch
 @pytest.fixture(autouse=True)
 def _tmp_files(tmp_path, monkeypatch):
     """Keeps tokens.json, settings.json and the voices out of the repo, and a saved setting from leaking into the next test."""
-    monkeypatch.setenv("KITTEN2_TOKENS_FILE", str(tmp_path / "tokens.json"))
-    monkeypatch.setenv("KITTEN2_VOICES_DIR", str(tmp_path / "voices"))
+    monkeypatch.setenv("SERVICE_TOKENS_FILE", str(tmp_path / "tokens.json"))
+    monkeypatch.setenv("SERVICE_VOICES_DIR", str(tmp_path / "voices"))
 
 
 BUILTIN = ["Bella", "Bruno", "Kiki"]

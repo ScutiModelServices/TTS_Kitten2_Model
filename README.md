@@ -24,11 +24,11 @@ The model runs in this process on the **CPU** by default (torch, the `kittenml` 
 
 **Streaming.** With `"stream": true` the WAV is sent chunk by chunk while the rest is still being made. A chunk is up to about 380 characters, so on a CPU the first audio can still take many seconds. The header cannot know the length yet: its size fields are `0xFFFFFFFF` (read "until the connection ends"), and there is no `X-Audio-Seconds`. Players and `ffmpeg` read it; Python's `wave` module does not. Errors known early (unknown voice, no speech in the text, model not loaded) are normal HTTP errors; one after the first chunk cuts the stream off.
 
-**Cache.** The *Answers kept per replica* setting (`KITTEN2_CACHE_SIZE`, default 32, 0 = off) keeps the last answers **for calls with a `seed`**. An answer over 1 MB is not kept. It is per replica and in memory, and emptied when the model is reloaded. Replacing a cloned voice does not empty it: use a new voice name.
+**Cache.** The *Answers kept per replica* setting (`SERVICE_CACHE_SIZE`, default 32, 0 = off) keeps the last answers **for calls with a `seed`**. An answer over 1 MB is not kept. It is per replica and in memory, and emptied when the model is reloaded. Replacing a cloned voice does not empty it: use a new voice name.
 
 ## Admin page
 
-`/admin/` (password `KITTEN2_ADMIN_PASSWORD`): tokens with voice scope, rate limit and expiry, usage numbers, CPU threads, the Settings card (update check hours, in-flight cap, answers kept, model revision, device, weight variant, decoder, token limit, load at start), and the Updates card. The page has no voice card yet; use the voice calls above (see `docs/guide-web-ui.md`). `/metrics` (admin password) is Prometheus text per token.
+`/admin/` (password `SERVICE_ADMIN_PASSWORD`): tokens with voice scope, rate limit and expiry, usage numbers, CPU threads, the Settings card (update check hours, in-flight cap, answers kept, model revision, device, weight variant, decoder, token limit, load at start), and the Updates card. The page has no voice card yet; use the voice calls above (see `docs/guide-web-ui.md`). `/metrics` (admin password) is Prometheus text per token.
 
 ## Run
 
@@ -54,7 +54,7 @@ The tests use a fake model. Before relying on a new revision, run the real model
 - One generation at a time per replica; extra calls wait, and more than the in-flight cap get 429. The rate limit is per replica.
 - The `packed` weights (954 MB) are lossless; `emb4` (469 MB) is smaller on disk but has a lossy embedding; `full` (3.5 GB) is plain bf16. The `student_w4` decoder is smaller, not faster. Memory in use was not compared across them.
 - Output is WAV only. Convert on the caller's side for MP3.
-- The revision is pinned (`KITTEN2_MODEL_REVISION`) and the update check only finds a missing download.
+- The revision is pinned (`SERVICE_MODEL_REVISION`) and the update check only finds a missing download.
 - Cloning a real person's voice needs their consent. Only the admin password can add voices.
 
 ## Try it from the admin page

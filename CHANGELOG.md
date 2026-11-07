@@ -2,6 +2,33 @@
 
 ## Unreleased
 
+### Breaking: common service environment variables
+
+Service-owned environment variables now use `SERVICE_*`. Old names are no longer read.
+Rename old names once in your real `.env`, Compose `environment:` block, and CI/secret settings.
+
+| Old name | New name |
+|---|---|
+| `KITTEN2_ADMIN_PASSWORD` | `SERVICE_ADMIN_PASSWORD` |
+| `KITTEN2_CACHE_SIZE` | `SERVICE_CACHE_SIZE` |
+| `KITTEN2_DECODER` | `SERVICE_DECODER` |
+| `KITTEN2_DEVICE` | `SERVICE_DEVICE` |
+| `KITTEN2_HOST` | `SERVICE_HOST` |
+| `KITTEN2_MAX_INFLIGHT` | `SERVICE_MAX_INFLIGHT` |
+| `KITTEN2_MAX_NEW_TOKENS` | `SERVICE_MAX_NEW_TOKENS` |
+| `KITTEN2_MEM_LIMIT` | `SERVICE_MEM_LIMIT` |
+| `KITTEN2_MODEL_REVISION` | `SERVICE_MODEL_REVISION` |
+| `KITTEN2_NUM_THREAD` | `SERVICE_NUM_THREAD` |
+| `KITTEN2_PORT` | `SERVICE_PORT` |
+| `KITTEN2_REPLICAS` | `SERVICE_REPLICAS` |
+| `KITTEN2_TOKENS_FILE` | `SERVICE_TOKENS_FILE` |
+| `KITTEN2_UPDATE_CHECK_HOURS` | `SERVICE_UPDATE_CHECK_HOURS` |
+| `KITTEN2_VOICES_DIR` | `SERVICE_VOICES_DIR` |
+| `KITTEN2_WARM` | `SERVICE_WARM` |
+| `KITTEN2_WEB_DIR` | `SERVICE_WEB_DIR` |
+| `KITTEN2_WEIGHTS` | `SERVICE_WEIGHTS` |
+| `KITTEN2_WEIGHTS_MARKER` | `SERVICE_WEIGHTS_MARKER` |
+
 - Move the default service port from 9250 to 29323, including API replicas and the nginx load balancer. Update any explicit old port in your real `.env`, saved tool-service `backends.json` connections, and browser or MCP client configuration once. With Compose defaults, recreate the stack to use the new host and container ports; a custom host-port override stays as configured, while container ports still change to 29323.
 
 - Renamed `TTSKitten2Model` to `TTS_Kitten2_Model`; Docker project, API image, services, load balancer and volumes now use `tts_kitten2_model` names. Callers on `citadel_core` connect to `tts_kitten2_model_lb` at the existing port.

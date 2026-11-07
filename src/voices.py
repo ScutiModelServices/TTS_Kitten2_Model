@@ -14,7 +14,7 @@ MAX_WAV_BYTES = 10_000_000  # about 1 minute of 44.1 kHz 16-bit mono; the model 
 
 
 def voices_dir() -> Path:
-    return Path(os.environ.get("KITTEN2_VOICES_DIR") or "_voices").expanduser()
+    return Path(os.environ.get("SERVICE_VOICES_DIR") or "_voices").expanduser()
 
 
 class VoiceStore:

@@ -1,6 +1,6 @@
 # TTS_Kitten2_Model
 
-KittenTTS 2 (1.7B speech language model, 115 built-in voices, zero-shot voice cloning) text to speech, served over HTTP on the CPU by default, behind the shared model-service admin page, tokens and settings. Port 29323, env prefix `KITTEN2_`, token prefix `kitten2_`.
+KittenTTS 2 (1.7B speech language model, 115 built-in voices, zero-shot voice cloning) text to speech, served over HTTP on the CPU by default, behind the shared model-service admin page, tokens and settings. Port 29323, env prefix `SERVICE_`, token prefix `kitten2_`.
 
 ## Agent instructions
 This file is the one instruction file for every coding agent; `CLAUDE.md` only imports it (`@AGENTS.md`). Edit this file, never `CLAUDE.md`.

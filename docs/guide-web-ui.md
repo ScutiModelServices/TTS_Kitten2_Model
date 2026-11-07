@@ -8,14 +8,14 @@ on the same device, Docker on a deployment device, no Docker). Only the address 
 | Docker or `run.bat` on this PC | `http://127.0.0.1:29323/admin/` |
 | Docker on the deployment box | `http://<box-ip>:29323/admin/` |
 
-If `KITTEN2_PORT` is changed, use that port.
+If `SERVICE_PORT` is changed, use that port.
 
 ## Before you open it
 
-The page needs the admin password: the value of `KITTEN2_ADMIN_PASSWORD`.
+The page needs the admin password: the value of `SERVICE_ADMIN_PASSWORD`.
 - Docker: set it in `.env` next to `docker-compose.yml`, then `docker compose up -d`.
 - No Docker: set it in `.env` in this folder and start with `run.bat` (it passes `--dotenv`), or set it in the environment first; a real environment variable wins over `.env`. A plain `python src/app.py` does not read `.env`.
-- Empty password = no auth at all and the page answers `Admin password required (set KITTEN2_ADMIN_PASSWORD)`. Set
+- Empty password = no auth at all and the page answers `Admin password required (set SERVICE_ADMIN_PASSWORD)`. Set
   one to use the page.
 
 ## Sign in and service status
@@ -49,9 +49,9 @@ are approximate. Request counts are added to the file with that same write; uses
 counted in memory, so a crash can lose up to a minute of them. Old token files without the field still load and show **never** until next use. A companion
 `tokens.json.lock` file serializes updates across replicas without adding dependencies.
 
-Tokens live in `tokens.json` (`KITTEN2_TOKENS_FILE`). In Docker that is the `tts_kitten2_model_data` volume at `/data`, so they
+Tokens live in `tokens.json` (`SERVICE_TOKENS_FILE`). In Docker that is the `tts_kitten2_model_data` volume at `/data`, so they
 survive `docker compose down` and rebuilds. Without Docker it is `tokens.json` in the folder the service starts from.
-Tokens are enforced only while `KITTEN2_ADMIN_PASSWORD` is set.
+Tokens are enforced only while `SERVICE_ADMIN_PASSWORD` is set.
 
 ## CPU threads
 
@@ -62,13 +62,13 @@ shows a busy indicator during saving; a short **Saved** confirmation follows. Th
 - Range 1 to 256. The field shows the value in use now (`num_thread` in `/health`; empty = torch decides).
 - The change applies at once to the replica that answers the click and is saved to `settings.json` next to
   `tokens.json`. Other replicas pick it up within a few seconds; no restart is needed.
-- The saved value beats `KITTEN2_NUM_THREAD` from `.env`. Remove `settings.json` from the `/data` volume to go back
+- The saved value beats `SERVICE_NUM_THREAD` from `.env`. Remove `settings.json` from the `/data` volume to go back
   to the `.env` value.
 
 ## Replicas and parallel requests (read-only)
 
-The tiles show replicas and parallel generations from `KITTEN2_REPLICAS`; each replica runs one generation at a time.
-The muted line says **Replicas: N. Change KITTEN2_REPLICAS in .env, then rebuild.** The
+The tiles show replicas and parallel generations from `SERVICE_REPLICAS`; each replica runs one generation at a time.
+The muted line says **Replicas: N. Change SERVICE_REPLICAS in .env, then rebuild.** The
 page cannot change them. To change, set them in `.env`, then:
 ```bash
 docker compose up -d --build
@@ -81,8 +81,8 @@ docker compose restart tts_kitten2_model_lb
 | Symptom | Fix |
 |---|---|
 | Page does not load | Service not running, wrong port, or blocked by a firewall. Test `/health`. |
-| `Wrong admin password` | Password differs from `KITTEN2_ADMIN_PASSWORD` in the running container. Recreate it after editing `.env`. |
-| `Admin password required (set KITTEN2_ADMIN_PASSWORD)` | The password is empty. Set it and restart. |
+| `Wrong admin password` | Password differs from `SERVICE_ADMIN_PASSWORD` in the running container. Recreate it after editing `.env`. |
+| `Admin password required (set SERVICE_ADMIN_PASSWORD)` | The password is empty. Set it and restart. |
 | Token lost | Revoke it and create a new one. |
 | `/health` shows `ready: false` | The model is still loading or downloading (about 2 GB the first time), or loading failed (see the container logs). |
 | Never expose port 29323 to the internet | It is a LAN tool; use a firewall or VPN for remote access. |
@@ -96,7 +96,7 @@ When you create a token you can list the voices it may use (comma separated, the
 The page has no voice card yet. Add a voice with the admin password (`X-Internal-Token`): a WAV clip of a few seconds (at most 10 MB) and exactly what it says.
 
 ```bash
-curl -X PUT http://127.0.0.1:29323/admin/voices/anna -H "X-Internal-Token: $KITTEN2_ADMIN_PASSWORD" -H "Content-Type: application/json" \n  -d "{\"transcript\": \"What the clip says.\", \"audio_base64\": \"$(base64 -w0 anna.wav)\"}"
+curl -X PUT http://127.0.0.1:29323/admin/voices/anna -H "X-Internal-Token: $SERVICE_ADMIN_PASSWORD" -H "Content-Type: application/json" \n  -d "{\"transcript\": \"What the clip says.\", \"audio_base64\": \"$(base64 -w0 anna.wav)\"}"
 ```
 
 `DELETE /admin/voices/anna` removes it. A name that a built-in voice already has (for example `Bruno`) is refused with `409`. Voices live in the `tts_kitten2_model_voices` volume, so every replica sees a change at once.

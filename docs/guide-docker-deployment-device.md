@@ -33,9 +33,9 @@ git clone -b live <your-repo-url> /media/ZimaOS-HD/Apps/TTS_Kitten2_Model
 cd /media/ZimaOS-HD/Apps/TTS_Kitten2_Model
 ```
 Create `.env` (deploy option 2 copies yours, or `cp .env.example .env` and edit):
-- `KITTEN2_ADMIN_PASSWORD`: a real password.
-- `KITTEN2_REPLICAS=1` unless you have the memory for more.
-- `KITTEN2_PORT=29323` (published on all interfaces; firewall it if the LAN should not reach it, or bind it to
+- `SERVICE_ADMIN_PASSWORD`: a real password.
+- `SERVICE_REPLICAS=1` unless you have the memory for more.
+- `SERVICE_PORT=29323` (published on all interfaces; firewall it if the LAN should not reach it, or bind it to
   `127.0.0.1` in the `ports:` line of `tts_kitten2_model_lb` when only callers on the machine need it).
 
 ## 3. Start
@@ -63,7 +63,7 @@ The first start downloads about 2 GB of weights into the `tts_kitten2_model_mode
 ## Scaling
 
 ```bash
-KITTEN2_REPLICAS=3 docker compose up -d --build
+SERVICE_REPLICAS=3 docker compose up -d --build
 docker compose restart tts_kitten2_model_lb
 ```
 

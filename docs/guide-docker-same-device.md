@@ -15,7 +15,7 @@ Run KittenTTS 2 text to speech with voice cloning on the CPU (about 6 GB of RAM)
    ```bash
    cp .env.example .env
    ```
-   Set `KITTEN2_ADMIN_PASSWORD` (empty = no auth and no admin page, fine for a local test). Leave `KITTEN2_PORT=29323`. Leave `KITTEN2_REPLICAS=1`.
+   Set `SERVICE_ADMIN_PASSWORD` (empty = no auth and no admin page, fine for a local test). Leave `SERVICE_PORT=29323`. Leave `SERVICE_REPLICAS=1`.
 2. Start:
    ```bash
    docker compose up -d --build
@@ -43,15 +43,15 @@ In `.env` next to `docker-compose.yml`:
 
 | Variable | Default | Effect |
 |---|---|---|
-| `KITTEN2_REPLICAS` | `1` | Number of `tts_kitten2_model` containers. Read by Compose. |
-| `KITTEN2_PORT` | `29323` | Host port `tts_kitten2_model_lb` publishes. |
-| `KITTEN2_ADMIN_PASSWORD` | empty | Password for `/admin/`. When set, every call except `/health` must send a token as `X-Internal-Token`. Empty = no auth. |
-| `KITTEN2_MEM_LIMIT` | `0` | RAM cap per replica (for example `8g`); 0 = no cap. A cap keeps an out-of-memory kill inside the container. Read by Compose. |
-| `KITTEN2_NUM_THREAD` | torch decides | Starting value for the CPU threads card (torch threads, applied live without a reload); a value saved on `/admin/` wins. Use the number of physical cores, not logical CPUs. |
+| `SERVICE_REPLICAS` | `1` | Number of `tts_kitten2_model` containers. Read by Compose. |
+| `SERVICE_PORT` | `29323` | Host port `tts_kitten2_model_lb` publishes. |
+| `SERVICE_ADMIN_PASSWORD` | empty | Password for `/admin/`. When set, every call except `/health` must send a token as `X-Internal-Token`. Empty = no auth. |
+| `SERVICE_MEM_LIMIT` | `0` | RAM cap per replica (for example `8g`); 0 = no cap. A cap keeps an out-of-memory kill inside the container. Read by Compose. |
+| `SERVICE_NUM_THREAD` | torch decides | Starting value for the CPU threads card (torch threads, applied live without a reload); a value saved on `/admin/` wins. Use the number of physical cores, not logical CPUs. |
 
 On the **Settings** card of `/admin/` (saved in `settings.json` beside the tokens, shared by all replicas; a saved
-value beats the environment variable named in brackets): update check hours (`KITTEN2_UPDATE_CHECK_HOURS`, 6),
-in-flight cap (`KITTEN2_MAX_INFLIGHT`, 0 = 4), answers kept per replica (`KITTEN2_CACHE_SIZE`, 32, 0 = off; seeded calls only, at most 1 MB each), model revision (`KITTEN2_MODEL_REVISION`, restart; the pinned Hub commit), device (`KITTEN2_DEVICE`, restart, `cpu`; `cuda` only on a host with a GPU and a CUDA torch, compose reserves none), weight variant (`KITTEN2_WEIGHTS`, restart, `packed`, `emb4` or `full`), decoder (`KITTEN2_DECODER`, restart, `default` or `student_w4`), most audio tokens per chunk (`KITTEN2_MAX_NEW_TOKENS`, restart, 1000) and load at start (`KITTEN2_WARM`, restart). Compose does not pass these;
+value beats the environment variable named in brackets): update check hours (`SERVICE_UPDATE_CHECK_HOURS`, 6),
+in-flight cap (`SERVICE_MAX_INFLIGHT`, 0 = 4), answers kept per replica (`SERVICE_CACHE_SIZE`, 32, 0 = off; seeded calls only, at most 1 MB each), model revision (`SERVICE_MODEL_REVISION`, restart; the pinned Hub commit), device (`SERVICE_DEVICE`, restart, `cpu`; `cuda` only on a host with a GPU and a CUDA torch, compose reserves none), weight variant (`SERVICE_WEIGHTS`, restart, `packed`, `emb4` or `full`), decoder (`SERVICE_DECODER`, restart, `default` or `student_w4`), most audio tokens per chunk (`SERVICE_MAX_NEW_TOKENS`, restart, 1000) and load at start (`SERVICE_WARM`, restart). Compose does not pass these;
 add the variable under `environment:` of `tts_kitten2_model` to use one as a starting value.
 
 ## Daily use
@@ -75,13 +75,13 @@ python tools/bench.py http://127.0.0.1:29323 --save out
 
 | Symptom | Fix |
 |---|---|
-| `address already in use` on 29323 | Another copy (`run.bat`, or the same stack on another compose project) is running. Stop it or change `KITTEN2_PORT`. |
+| `address already in use` on 29323 | Another copy (`run.bat`, or the same stack on another compose project) is running. Stop it or change `SERVICE_PORT`. |
 | `/health` shows `ready: false` for minutes | First start: the weights are downloading or loading. Check `docker compose logs -f tts_kitten2_model`. |
 | 401 Invalid token | The caller's token is missing or revoked; make one on `/admin/`. |
 | 503 `no GPU is visible here` | The `device` setting is `cuda` but the container has no GPU. Set it back to `cpu`. |
-| Container restarts in a loop | Out of RAM (about 6 GB per replica). Close other programs, or set `KITTEN2_MEM_LIMIT` to find the limit. |
+| Container restarts in a loop | Out of RAM (about 6 GB per replica). Close other programs, or set `SERVICE_MEM_LIMIT` to find the limit. |
 | `tts_kitten2_model_lb` never starts | No replica is healthy yet (first download, or out of memory). `docker compose logs tts_kitten2_model`. |
-| Replicas restart in a loop | Out of RAM (about 6 GB per replica). Lower `KITTEN2_REPLICAS`, or check `docker compose logs tts_kitten2_model`. |
+| Replicas restart in a loop | Out of RAM (about 6 GB per replica). Lower `SERVICE_REPLICAS`, or check `docker compose logs tts_kitten2_model`. |
 | 403 "may not use voice" | The token's list on `/admin/` does not include that voice (or `Bruno`, the default, when `voice` is left out). |
 | 404 on `/v1/speak` | The voice is not served here. `GET /v1/voices` lists them. |
 | 422 on `format` or another field | Only `text`, `voice`, `seed`, `temperature`, `preset`, `normalize` and `stream` exist; the reply is always WAV. |
