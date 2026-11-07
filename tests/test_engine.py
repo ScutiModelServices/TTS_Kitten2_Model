@@ -119,3 +119,25 @@ def test_generation_changes_when_the_loaded_model_is_dropped():
     before = engine.generation
     asyncio.run(engine.unload())
     assert engine.generation == before + 1
+
+
+@pytest.mark.parametrize("gpu, expected", [(True, "cuda"), (False, "cpu")])
+def test_device_auto_picks_the_gpu_only_when_one_is_visible(monkeypatch, gpu, expected):
+    import sys
+    import types
+
+    import engine as engine_module
+    import torch
+
+    seen = {}
+
+    class FakeKitten:
+        def __init__(self, path, device, weights, decoder):
+            seen["device"] = device
+
+    monkeypatch.setattr(torch.cuda, "is_available", lambda: gpu)
+    monkeypatch.setattr(engine_module, "_snapshot", lambda *args, **kwargs: "model-dir")
+    monkeypatch.setattr(engine_module, "Speaker", lambda model: types.SimpleNamespace(speak=lambda *a, **k: None))
+    monkeypatch.setitem(sys.modules, "kittenml", types.SimpleNamespace(KittenTTS=FakeKitten))
+    engine_module.load("m", "rev", "auto", "packed", "default")
+    assert seen["device"] == expected

@@ -98,6 +98,8 @@ def load(model_id: str, revision: str, device: str, weights: str, decoder: str) 
     import torch
     from kittenml import KittenTTS
 
+    if device == "auto":  # the GPU when torch sees one, else the CPU
+        device = "cuda" if torch.cuda.is_available() else "cpu"
     if device.startswith("cuda") and not torch.cuda.is_available():
         raise EngineError("The device is cuda but no GPU is visible here. Set the device to cpu.", 503)
     try:

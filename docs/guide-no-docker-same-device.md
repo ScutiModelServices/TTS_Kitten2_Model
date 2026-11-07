@@ -28,7 +28,8 @@ On macOS the CPU build of torch comes from PyPI; this was not tried here.
 | `SERVICE_PORT` | `29323` | Port. |
 | `SERVICE_ADMIN_PASSWORD` | empty | Unlocks `/admin/` and requires tokens on every call but `/health`. Empty = no auth. |
 | `SERVICE_WARM` | `1` | Load the model at start; with `0` the first request pays the load time. |
-| `SERVICE_DEVICE` | `cpu` | `cuda` only with a GPU and a CUDA build of torch (the lock file pins the CPU build). |
+| `SERVICE_DEVICE` | `cpu` | `auto` = `cuda` when a GPU is visible, else `cpu`. `cuda` only with a GPU and a CUDA build of torch (the lock file pins the CPU build, so `auto` stays on `cpu` until you swap it). |
+| `SERVICE_MODELS_DIR` | the library's default cache | Folder for downloaded model weights. Sets `HF_HOME` (and `OLLAMA_MODELS` to `<folder>\ollama`) at start; a real `HF_HOME` or `OLLAMA_MODELS` wins. Docker keeps weights in the `_models` volume and ignores it. |
 
 PowerShell: `$env:SERVICE_ADMIN_PASSWORD = "secret"; .\run.bat`
 Bash: `SERVICE_ADMIN_PASSWORD=secret uv run python src/app.py`

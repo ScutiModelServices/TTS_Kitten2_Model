@@ -13,7 +13,7 @@ SETTINGS = [
     Setting("model_revision", "Model revision", "text", DEFAULT_REVISION, "SERVICE_MODEL_REVISION", restart=True, blank=False,
             help="The Hub commit of KittenML/kitten-tts-2 (Stellon Labs Community License). After a restart, download it from the Updates card"),
     Setting("device", "Device", "text", "cpu", "SERVICE_DEVICE", restart=True, blank=False,
-            help="cpu as shipped. cuda only on a host with an NVIDIA GPU and a CUDA build of torch; compose reserves no GPU"),
+            help="cpu as shipped. auto = cuda when a GPU is visible, else cpu. cuda only on a host with an NVIDIA GPU and a CUDA build of torch; compose reserves no GPU"),
     Setting("weights", "Weight variant", "text", "packed", "SERVICE_WEIGHTS", restart=True, blank=False,
             help="packed (954 MB, lossless), emb4 (469 MB, lossy embedding) or full (3.5 GB, plain bf16)"),
     Setting("decoder", "Decoder", "text", "default", "SERVICE_DECODER", restart=True, blank=False,
