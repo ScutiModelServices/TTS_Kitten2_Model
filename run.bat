@@ -31,7 +31,7 @@ if errorlevel 1 (
 )
 REM kittenml reads some files without an encoding; Windows would use its legacy code page and fail.
 set PYTHONUTF8=1
-".venv\Scripts\python.exe" src/app.py
+".venv\Scripts\python.exe" src/app.py --dotenv
 pause
 exit /b 0
 
