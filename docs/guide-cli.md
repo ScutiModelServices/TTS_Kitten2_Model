@@ -22,7 +22,7 @@ Invoke-RestMethod "$base/health"
 Add a cloned voice once (admin password). The server needs a WAV file, so convert your recording first. Repeat only when the clip or transcript changes.
 
 ```powershell
-$ref = "$env:TEMP\ref.wav"
+$ref = "D:\User\Downloads\_temp\ref.wav"
 ffmpeg -y -loglevel error -i "<recording.mp3>" -ac 1 $ref
 $body = @{ audio_base64 = [Convert]::ToBase64String([IO.File]::ReadAllBytes($ref)); transcript = "<exactly what the recording says>" } | ConvertTo-Json
 Invoke-RestMethod -Method Put -Uri "$base/admin/voices/myvoice" -Headers $pw -ContentType "application/json; charset=utf-8" -Body ([Text.Encoding]::UTF8.GetBytes($body))
