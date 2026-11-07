@@ -1,6 +1,6 @@
 # TTS_Kitten2_Model: Docker on a deployment machine
 
-Run KittenTTS 2 text to speech with voice cloning on the CPU (about 6 GB of RAM per replica) on a separate always-on machine (default `lex@scutiserver1.local`, folder
+Run KittenTTS 2 text to speech with voice cloning on the GPU when one is reserved, else the CPU (about 6 GB of RAM per replica on the CPU) on a separate always-on machine (default `lex@scutiserver1.local`, folder
 `/media/ZimaOS-HD/Apps/TTS_Kitten2_Model`). Callers reach it over the published port.
 
 ## Requirements on the machine

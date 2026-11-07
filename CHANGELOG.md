@@ -2,7 +2,8 @@
 
 ## Unreleased
 
-- `device` setting accepts `auto`: `cuda` when torch sees a GPU, else `cpu`. The shipped CPU-only torch (lock file, Dockerfile) always resolves to `cpu`; a GPU needs a CUDA build of torch.
+- `device` setting accepts `auto` (new default): `cuda` when torch sees a GPU, else `cpu`.
+- Torch now comes from the CUDA index (`cu126`, pinned `torch==2.7.1` like TTS_Audio8_Model), so the venv and the image grow by about 4.5 GB. The Dockerfile no longer asserts CPU-only torch and compose reserves one NVIDIA GPU (needs the NVIDIA Container Toolkit; a host without a GPU must delete the `resources:` block in `docker-compose.yml`).
 
 - `SERVICE_MODELS_DIR` sets where a local (no Docker) run keeps downloaded model weights: `settings.apply_models_dir()` maps it to `HF_HOME` and `OLLAMA_MODELS` at start.
 - Docs: `docs/guide-cli.md`, a PowerShell-only way to test the service.

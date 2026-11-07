@@ -1,10 +1,10 @@
 # TTS_Kitten2_Model: without Docker, on Windows
 
-Run KittenTTS 2 text to speech with voice cloning on the CPU (about 6 GB of RAM) directly with Python: one process, no load balancer, listening on `127.0.0.1:29323`.
+Run KittenTTS 2 text to speech with voice cloning on the GPU when one is visible, else the CPU (about 6 GB of RAM on the CPU), directly with Python: one process, no load balancer, listening on `127.0.0.1:29323`.
 
 ## Requirements
 - Windows with Python 3.11 or newer and uv (`winget install astral-sh.uv`).
-- Enough RAM: about 6 GB free. The `uv.lock` pins the CPU build of torch.
+- Enough RAM: about 6 GB free. The `uv.lock` has the CUDA build of torch (the venv is about 5 GB); a GPU is optional.
 - Internet on the first start (about 2 GB of weights).
 
 ## Start
@@ -28,7 +28,7 @@ On macOS the CPU build of torch comes from PyPI; this was not tried here.
 | `SERVICE_PORT` | `29323` | Port. |
 | `SERVICE_ADMIN_PASSWORD` | empty | Unlocks `/admin/` and requires tokens on every call but `/health`. Empty = no auth. |
 | `SERVICE_WARM` | `1` | Load the model at start; with `0` the first request pays the load time. |
-| `SERVICE_DEVICE` | `cpu` | `auto` = `cuda` when a GPU is visible, else `cpu`. `cuda` only with a GPU and a CUDA build of torch (the lock file pins the CPU build, so `auto` stays on `cpu` until you swap it). |
+| `SERVICE_DEVICE` | `auto` | `auto` = `cuda` when a GPU is visible, else `cpu`. The lock file has the CUDA build of torch. |
 | `SERVICE_MODELS_DIR` | the library's default cache | Folder for downloaded model weights. Sets `HF_HOME` (and `OLLAMA_MODELS` to `<folder>\ollama`) at start; a real `HF_HOME` or `OLLAMA_MODELS` wins. Docker keeps weights in the `_models` volume and ignores it. |
 
 PowerShell: `$env:SERVICE_ADMIN_PASSWORD = "secret"; .\run.bat`

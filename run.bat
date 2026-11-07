@@ -1,7 +1,7 @@
 @echo off
-REM Starts the kitten2 service on port 29323 (syncs .venv with uv on each run). The first start downloads about 1 GB of weights. Runs on the CPU.
+REM Starts the kitten2 service on port 29323 (syncs .venv with uv on each run). The first start downloads about 1 GB of weights. Uses the GPU when one is visible (device auto), else the CPU.
 REM LABEL: Kitten2 TTS Service
-REM DESCRIPTION: Shared HTTP service that runs KittenTTS 2 text to speech with voice cloning on the CPU for every project.
+REM DESCRIPTION: Shared HTTP service that runs KittenTTS 2 text to speech with voice cloning on the GPU or CPU for every project.
 cd /d "%~dp0"
 if /i "%~1"=="run" goto run
 if /i "%~1"=="deploy" goto deploy

@@ -1,6 +1,8 @@
 # KittenTTS 2 text-to-speech service: N API replicas behind one nginx address. Each replica runs the 1.7B model in its own
-# process on the CPU, so RAM use is per replica (measure it; the model card gives no figure); the downloaded weights are
+# process on the GPU (device `auto`: the GPU when visible, else the CPU, about 6 GB of RAM); the downloaded weights are
 # shared through the models volume, the cloned voices through the voices volume.
+# Reserves one NVIDIA GPU: needs the NVIDIA Container Toolkit (Docker Desktop on Windows: WSL2 backend with GPU support).
+# A host without an NVIDIA GPU cannot start it as is: delete the `resources:` block under `deploy:`.
 # Start:  docker compose up -d --build          (callers use http://<host>:29323)
 # Scale:  SERVICE_REPLICAS=2 docker compose up -d --build, then: docker compose restart tts_kitten2_model_lb
 
@@ -22,6 +24,12 @@ services:
       - tts_kitten2_model_data:/data
     deploy:
       replicas: ${SERVICE_REPLICAS:-1}
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:29323/health')"]
       interval: 15s

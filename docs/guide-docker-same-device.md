@@ -1,13 +1,13 @@
 # TTS_Kitten2_Model: Docker Desktop on this PC
 
-Run KittenTTS 2 text to speech with voice cloning on the CPU (about 6 GB of RAM) in Docker Desktop on the machine you work on, so other programs on it can call it.
+Run KittenTTS 2 text to speech with voice cloning on the GPU when one is reserved, else the CPU (about 6 GB of RAM on the CPU), in Docker Desktop on the machine you work on, so other programs on it can call it.
 
 ## Requirements
 
 - Docker Desktop with Compose v2 (Windows: WSL2 backend).
 - Network access on the first start to download about 2 GB from Hugging Face into the `tts_kitten2_model_models` volume.
 - RAM per replica: about 5.7 GB resident after loading and 6.1 GB peak (measured on a Ryzen 7 7445HS, `packed` weights). Plan for 8 GB free per replica.
-- It runs on the CPU, so any Docker host works, but the model is heavy: see "Hardware" below before putting it on a small box.
+- Compose reserves one NVIDIA GPU (NVIDIA Container Toolkit; Docker Desktop on Windows: WSL2 backend with GPU support). On a host without one, delete the `resources:` block under `deploy:` in `docker-compose.yml`; it then runs on the CPU, and the model is heavy there: see "Hardware" below.
 
 ## Steps
 

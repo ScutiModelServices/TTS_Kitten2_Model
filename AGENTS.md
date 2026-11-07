@@ -1,6 +1,6 @@
 # TTS_Kitten2_Model
 
-KittenTTS 2 (1.7B speech language model, 115 built-in voices, zero-shot voice cloning) text to speech, served over HTTP on the CPU by default, behind the shared model-service admin page, tokens and settings. Port 29323, env prefix `SERVICE_`, token prefix `kitten2_`.
+KittenTTS 2 (1.7B speech language model, 115 built-in voices, zero-shot voice cloning) text to speech, served over HTTP on the GPU when one is visible (device `auto`), else the CPU, behind the shared model-service admin page, tokens and settings. Port 29323, env prefix `SERVICE_`, token prefix `kitten2_`.
 
 ## Agent instructions
 This file is the one instruction file for every coding agent; `CLAUDE.md` only imports it (`@AGENTS.md`). Edit this file, never `CLAUDE.md`.
@@ -17,7 +17,7 @@ This file is the one instruction file for every coding agent; `CLAUDE.md` only i
 - The engine uses the `kittenml` package (pinned `==0.9.4`). It downloads the pinned `model_revision` itself (`_kitten2_files` from `kittenml.get_model` is private: check it after a version bump) and points the package at the local folder. The package has no `trust_remote_code`. The weights are under the Stellon Labs Community License (free below USD 1M revenue or funding); read its attribution rules before shipping a product on them.
 - Run Python with `PYTHONUTF8=1` on Windows (`run.bat` sets it): the package reads files without an encoding.
 - The cache keeps only seeded calls. A non-streamed call joins the model's chunks (about 380 characters each); a stream sends them untrimmed, one per chunk.
-- CPU only as shipped (`device` setting; compose reserves no GPU). Measured on a Ryzen 7 7445HS (6 cores), bf16: 5.7 GB resident after load, 6.1 GB peak, about 5 to 10 s of work per second of audio (0.1 to 0.2 times real time). Tests use a fake model.
+- CUDA torch (`cu126`, `torch==2.7.1`, same wheel as TTS_Audio8_Model); `device` setting default `auto` = cuda when a GPU is visible, else cpu. Compose reserves one NVIDIA GPU. Measured on CPU only (Ryzen 7 7445HS, 6 cores, bf16): 5.7 GB resident after load, 6.1 GB peak, 0.1 to 0.2 times real time; GPU speed and VRAM not measured. Tests use a fake model.
 - Behaviour changes update `README.md`, `deployment.md`, `docs/guide-web-ui.md`, `.env.example` and `CHANGELOG.md` in the same commit.
 - Never read or print `.env`, `tokens.json` or `settings.json`.
 - Commit with the noreply author email `214214011+scutiii2@users.noreply.github.com` (another address is rejected on push). Push `main`, then run `python tools/publish_live.py`. Build Docker only when the Dockerfile or the dependencies changed.
