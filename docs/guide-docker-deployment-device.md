@@ -7,11 +7,11 @@ Run KittenTTS 2 text to speech with voice cloning on the CPU (about 6 GB of RAM 
 
 - Docker + Compose v2, and ssh access (root over ssh is refused; use the normal user).
 - Linux with Docker and Compose v2, and about 8 GB of free RAM per replica.
-- The model is heavy on a CPU (about 5 to 10 s of work per second of audio on a 6-core Ryzen). Check the target box has the RAM and cores before deploying; `deploy.bat` defaults to `lex@scutiserver1.local` (ZimaOS), which was not measured here.
+- The model is heavy on a CPU (about 5 to 10 s of work per second of audio on a 6-core Ryzen). Check the target box has the RAM and cores before deploying; Deploy defaults to `lex@scutiserver1.local` (ZimaOS), which was not measured here.
 
 ## 1. Publish the code (from your PC)
 
-Run `TTSKitten2Model\tools\deploy.bat`. Menu:
+Run `TTSKitten2Model\run.bat` and choose **Deploy** (or `run.bat deploy`). Menu:
 
 | Option | Does |
 |---|---|
@@ -22,7 +22,7 @@ Run `TTSKitten2Model\tools\deploy.bat`. Menu:
 | 6 | chown helper, if option 2 says `Permission denied` |
 | R | Release: publish, then tag `VERSION` |
 
-Keep your own target in the git-ignored `tools\deploy.local.bat` (copy `tools\deploy.local.example.bat`), or set
+Keep your own target in the git-ignored `tools\deploy.local.ini` (copy `tools\deploy.local.example.ini`), or set
 `DEPLOY_HOST`, `DEPLOY_DIR` and `DEPLOY_WEB_PORT` before running. Commit `main` first: publish reads committed `main`.
 
 ## 2. First-time setup on the machine
@@ -80,9 +80,9 @@ docker compose restart kitten2_lb
 
 ## Releasing
 
-A plain publish (`tools\deploy.bat` option 1) only updates the `live` branch. For a release set `VERSION` (and
-`pyproject.toml` to the same number), commit, then run `tools\deploy.bat` option R or
-`py tools\publish_live.py --release`. `tools\make_zip.bat` then builds `zip_versions\TTSKitten2Model-<VERSION>.zip`.
+A plain publish (`run.bat`, Deploy, option 1) only updates the `live` branch. For a release set `VERSION` (and
+`pyproject.toml` to the same number), commit, then run `run.bat`, Deploy, option R or
+`py tools\publish_live.py --release`. `run.bat`, Build the release ZIP, then builds `_zip_versions\TTSKitten2Model-<VERSION>.zip`.
 
 ## Problems
 
@@ -90,6 +90,6 @@ A plain publish (`tools\deploy.bat` option 1) only updates the `live` branch. Fo
 |---|---|
 | Caller cannot reach the service | Check the caller's URL and token, and that `curl http://<machine-ip>:9250/health` works. |
 | nginx 502 after an update | `docker compose restart kitten2_lb`. |
-| Permission denied on push | deploy.bat option 6. |
+| Permission denied on push | run.bat Deploy option 6. |
 | Port 9250 in use | Another stack on the machine already publishes it. |
 | 503 `no GPU is visible here` | The `device` setting is `cuda` but the container has no GPU. Set it back to `cpu`. |
