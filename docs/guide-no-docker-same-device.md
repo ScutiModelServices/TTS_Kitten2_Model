@@ -1,6 +1,6 @@
 # TTS_Kitten2_Model: without Docker, on Windows
 
-Run KittenTTS 2 text to speech with voice cloning on the CPU (about 6 GB of RAM) directly with Python: one process, no load balancer, listening on `127.0.0.1:9250`.
+Run KittenTTS 2 text to speech with voice cloning on the CPU (about 6 GB of RAM) directly with Python: one process, no load balancer, listening on `127.0.0.1:29323`.
 
 ## Requirements
 - Windows with Python 3.11 or newer and uv (`winget install astral-sh.uv`).
@@ -25,7 +25,7 @@ On macOS the CPU build of torch comes from PyPI; this was not tried here.
 | Variable | Default | Effect |
 |---|---|---|
 | `KITTEN2_HOST` | `127.0.0.1` | Bind address. Use `0.0.0.0` only if other devices must reach it. |
-| `KITTEN2_PORT` | `9250` | Port. |
+| `KITTEN2_PORT` | `29323` | Port. |
 | `KITTEN2_ADMIN_PASSWORD` | empty | Unlocks `/admin/` and requires tokens on every call but `/health`. Empty = no auth. |
 | `KITTEN2_WARM` | `1` | Load the model at start; with `0` the first request pays the load time. |
 | `KITTEN2_DEVICE` | `cpu` | `cuda` only with a GPU and a CUDA build of torch (the lock file pins the CPU build). |
@@ -35,16 +35,16 @@ Bash: `KITTEN2_ADMIN_PASSWORD=secret uv run python src/app.py`
 
 ## Check
 ```bash
-curl http://127.0.0.1:9250/health
+curl http://127.0.0.1:29323/health
 ```
-`ready` is `false` until the model has loaded. Then open `http://127.0.0.1:9250/admin/` (see [guide-web-ui.md](guide-web-ui.md)),
+`ready` is `false` until the model has loaded. Then open `http://127.0.0.1:29323/admin/` (see [guide-web-ui.md](guide-web-ui.md)),
 make a token, and try a call:
 ```bash
-curl -X POST http://127.0.0.1:9250/v1/speak -H "Content-Type: application/json" -H "X-Internal-Token: kitten2_..." -d '{"text":"Hello from the model service."}' -o hello.wav
+curl -X POST http://127.0.0.1:29323/v1/speak -H "Content-Type: application/json" -H "X-Internal-Token: kitten2_..." -d '{"text":"Hello from the model service."}' -o hello.wav
 ```
 
 ## Stop
-Ctrl+C in the terminal. Do not run this and the Docker stack together: both use port 9250.
+Ctrl+C in the terminal. Do not run this and the Docker stack together: both use port 29323.
 
 ## Tests
 `uv run pytest`.

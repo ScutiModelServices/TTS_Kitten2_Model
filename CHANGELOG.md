@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Move the default service port from 9250 to 29323, including API replicas and the nginx load balancer. Update any explicit old port in your real `.env`, saved tool-service `backends.json` connections, and browser or MCP client configuration once. With Compose defaults, recreate the stack to use the new host and container ports; a custom host-port override stays as configured, while container ports still change to 29323.
+
 - Renamed `TTSKitten2Model` to `TTS_Kitten2_Model`; Docker project, API image, services, load balancer and volumes now use `tts_kitten2_model` names. Callers on `citadel_core` connect to `tts_kitten2_model_lb` at the existing port.
 - Docker volume migration: existing volumes with old names are orphaned; renaming does not move data. Stop the old stack before copying; never use `down -v`. The commands below assume the previous default Compose project name; substitute actual volume names if `-p` or `COMPOSE_PROJECT_NAME` overrode it.
   - `kitten2_models` → `tts_kitten2_model_models`: `docker volume inspect kitten2_models && docker volume create tts_kitten2_model_models && docker run --rm -v kitten2_models:/from:ro -v tts_kitten2_model_models:/to alpine:3.21 sh -c "cd /from && cp -a . /to/"`

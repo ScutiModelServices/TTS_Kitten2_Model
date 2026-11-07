@@ -15,7 +15,7 @@ Run KittenTTS 2 text to speech with voice cloning on the CPU (about 6 GB of RAM)
    ```bash
    cp .env.example .env
    ```
-   Set `KITTEN2_ADMIN_PASSWORD` (empty = no auth and no admin page, fine for a local test). Leave `KITTEN2_PORT=9250`. Leave `KITTEN2_REPLICAS=1`.
+   Set `KITTEN2_ADMIN_PASSWORD` (empty = no auth and no admin page, fine for a local test). Leave `KITTEN2_PORT=29323`. Leave `KITTEN2_REPLICAS=1`.
 2. Start:
    ```bash
    docker compose up -d --build
@@ -24,18 +24,18 @@ Run KittenTTS 2 text to speech with voice cloning on the CPU (about 6 GB of RAM)
    (up to 300 s grace). Watch with `docker compose ps` and `docker compose logs -f tts_kitten2_model`.
 3. Check:
    ```bash
-   curl http://127.0.0.1:9250/health
+   curl http://127.0.0.1:29323/health
    ```
    `ready` is `false` until the model has loaded, then `true`.
-4. Open the admin page: `http://127.0.0.1:9250/admin/` (see [guide-web-ui.md](guide-web-ui.md)) and make a token for each caller.
+4. Open the admin page: `http://127.0.0.1:29323/admin/` (see [guide-web-ui.md](guide-web-ui.md)) and make a token for each caller.
 5. Try a call:
    ```bash
-   curl -X POST http://127.0.0.1:9250/v1/speak -H "Content-Type: application/json" -H "X-Internal-Token: kitten2_..." -d '{"text":"Hello from the model service."}' -o hello.wav
+   curl -X POST http://127.0.0.1:29323/v1/speak -H "Content-Type: application/json" -H "X-Internal-Token: kitten2_..." -d '{"text":"Hello from the model service."}' -o hello.wav
    ```
    Expect a WAV file, `hello.wav`.
 6. Callers connect to the published port. The caller holds the URL and token:
-   - Caller on the host: `http://127.0.0.1:9250`.
-   - Caller in another Docker stack on the same host: `http://host.docker.internal:9250`.
+   - Caller on the host: `http://127.0.0.1:29323`.
+   - Caller in another Docker stack on the same host: `http://host.docker.internal:29323`.
 
 ## Settings
 
@@ -44,7 +44,7 @@ In `.env` next to `docker-compose.yml`:
 | Variable | Default | Effect |
 |---|---|---|
 | `KITTEN2_REPLICAS` | `1` | Number of `tts_kitten2_model` containers. Read by Compose. |
-| `KITTEN2_PORT` | `9250` | Host port `tts_kitten2_model_lb` publishes. |
+| `KITTEN2_PORT` | `29323` | Host port `tts_kitten2_model_lb` publishes. |
 | `KITTEN2_ADMIN_PASSWORD` | empty | Password for `/admin/`. When set, every call except `/health` must send a token as `X-Internal-Token`. Empty = no auth. |
 | `KITTEN2_MEM_LIMIT` | `0` | RAM cap per replica (for example `8g`); 0 = no cap. A cap keeps an out-of-memory kill inside the container. Read by Compose. |
 | `KITTEN2_NUM_THREAD` | torch decides | Starting value for the CPU threads card (torch threads, applied live without a reload); a value saved on `/admin/` wins. Use the number of physical cores, not logical CPUs. |
@@ -68,14 +68,14 @@ docker compose up -d --build && docker compose restart tts_kitten2_model_lb   # 
 Try it and time it:
 
 ```bash
-python tools/bench.py http://127.0.0.1:9250 --save out
+python tools/bench.py http://127.0.0.1:29323 --save out
 ```
 
 ## Problems
 
 | Symptom | Fix |
 |---|---|
-| `address already in use` on 9250 | Another copy (`run.bat`, or the same stack on another compose project) is running. Stop it or change `KITTEN2_PORT`. |
+| `address already in use` on 29323 | Another copy (`run.bat`, or the same stack on another compose project) is running. Stop it or change `KITTEN2_PORT`. |
 | `/health` shows `ready: false` for minutes | First start: the weights are downloading or loading. Check `docker compose logs -f tts_kitten2_model`. |
 | 401 Invalid token | The caller's token is missing or revoked; make one on `/admin/`. |
 | 503 `no GPU is visible here` | The `device` setting is `cuda` but the container has no GPU. Set it back to `cpu`. |
@@ -89,4 +89,4 @@ python tools/bench.py http://127.0.0.1:9250 --save out
 | 429 | Over the token's rate limit, or too many calls waiting for the model. |
 | nginx 502 after scaling | `tts_kitten2_model_lb` not restarted after the replica count changed. |
 
-The load balancer also joins external `citadel_core` as `tts_kitten2_model_lb`. Start the Citadel stack first so that network exists; tool services on it use `http://tts_kitten2_model_lb:9250`. Docker project and API image are `tts_kitten2_model` and `tts_kitten2_model:latest`; persistent volumes have explicit `tts_kitten2_model_*` names. Volume migration and rollback instructions are in [CHANGELOG.md](../CHANGELOG.md).
+The load balancer also joins external `citadel_core` as `tts_kitten2_model_lb`. Start the Citadel stack first so that network exists; tool services on it use `http://tts_kitten2_model_lb:29323`. Docker project and API image are `tts_kitten2_model` and `tts_kitten2_model:latest`; persistent volumes have explicit `tts_kitten2_model_*` names. Volume migration and rollback instructions are in [CHANGELOG.md](../CHANGELOG.md).

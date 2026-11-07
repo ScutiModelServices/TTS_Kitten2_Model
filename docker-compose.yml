@@ -1,7 +1,7 @@
 # KittenTTS 2 text-to-speech service: N API replicas behind one nginx address. Each replica runs the 1.7B model in its own
 # process on the CPU, so RAM use is per replica (measure it; the model card gives no figure); the downloaded weights are
 # shared through the models volume, the cloned voices through the voices volume.
-# Start:  docker compose up -d --build          (callers use http://<host>:9250)
+# Start:  docker compose up -d --build          (callers use http://<host>:29323)
 # Scale:  KITTEN2_REPLICAS=2 docker compose up -d --build, then: docker compose restart tts_kitten2_model_lb
 
 name: tts_kitten2_model
@@ -23,7 +23,7 @@ services:
     deploy:
       replicas: ${KITTEN2_REPLICAS:-1}
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:9250/health')"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:29323/health')"]
       interval: 15s
       timeout: 5s
       start_period: 300s
@@ -34,7 +34,7 @@ services:
     image: nginx:1.27-alpine
     restart: unless-stopped
     ports:
-      - "${KITTEN2_PORT:-9250}:9250"
+      - "${KITTEN2_PORT:-29323}:29323"
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
@@ -53,7 +53,7 @@ volumes:
   tts_kitten2_model_data:
     name: tts_kitten2_model_data
 networks:
-  # Other stacks reach http://tts_kitten2_model_lb:9250 by joining this network.
+  # Other stacks reach http://tts_kitten2_model_lb:29323 by joining this network.
   tts_kitten2_model:
     name: tts_kitten2_model
   citadel:

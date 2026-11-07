@@ -5,8 +5,8 @@ on the same device, Docker on a deployment device, no Docker). Only the address 
 
 | Run | Address |
 |---|---|
-| Docker or `run.bat` on this PC | `http://127.0.0.1:9250/admin/` |
-| Docker on the deployment box | `http://<box-ip>:9250/admin/` |
+| Docker or `run.bat` on this PC | `http://127.0.0.1:29323/admin/` |
+| Docker on the deployment box | `http://<box-ip>:29323/admin/` |
 
 If `KITTEN2_PORT` is changed, use that port.
 
@@ -85,7 +85,7 @@ docker compose restart tts_kitten2_model_lb
 | `Admin password required (set KITTEN2_ADMIN_PASSWORD)` | The password is empty. Set it and restart. |
 | Token lost | Revoke it and create a new one. |
 | `/health` shows `ready: false` | The model is still loading or downloading (about 2 GB the first time), or loading failed (see the container logs). |
-| Never expose port 9250 to the internet | It is a LAN tool; use a firewall or VPN for remote access. |
+| Never expose port 29323 to the internet | It is a LAN tool; use a firewall or VPN for remote access. |
 
 ## Limiting a token to voices
 
@@ -96,7 +96,7 @@ When you create a token you can list the voices it may use (comma separated, the
 The page has no voice card yet. Add a voice with the admin password (`X-Internal-Token`): a WAV clip of a few seconds (at most 10 MB) and exactly what it says.
 
 ```bash
-curl -X PUT http://127.0.0.1:9250/admin/voices/anna -H "X-Internal-Token: $KITTEN2_ADMIN_PASSWORD" -H "Content-Type: application/json" \n  -d "{\"transcript\": \"What the clip says.\", \"audio_base64\": \"$(base64 -w0 anna.wav)\"}"
+curl -X PUT http://127.0.0.1:29323/admin/voices/anna -H "X-Internal-Token: $KITTEN2_ADMIN_PASSWORD" -H "Content-Type: application/json" \n  -d "{\"transcript\": \"What the clip says.\", \"audio_base64\": \"$(base64 -w0 anna.wav)\"}"
 ```
 
 `DELETE /admin/voices/anna` removes it. A name that a built-in voice already has (for example `Bruno`) is refused with `409`. Voices live in the `tts_kitten2_model_voices` volume, so every replica sees a change at once.

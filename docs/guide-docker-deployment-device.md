@@ -35,7 +35,7 @@ cd /media/ZimaOS-HD/Apps/TTS_Kitten2_Model
 Create `.env` (deploy option 2 copies yours, or `cp .env.example .env` and edit):
 - `KITTEN2_ADMIN_PASSWORD`: a real password.
 - `KITTEN2_REPLICAS=1` unless you have the memory for more.
-- `KITTEN2_PORT=9250` (published on all interfaces; firewall it if the LAN should not reach it, or bind it to
+- `KITTEN2_PORT=29323` (published on all interfaces; firewall it if the LAN should not reach it, or bind it to
   `127.0.0.1` in the `ports:` line of `tts_kitten2_model_lb` when only callers on the machine need it).
 
 ## 3. Start
@@ -43,21 +43,21 @@ Create `.env` (deploy option 2 copies yours, or `cp .env.example .env` and edit)
 ```bash
 docker compose up -d --build
 docker compose ps
-curl http://127.0.0.1:9250/health
+curl http://127.0.0.1:29323/health
 ```
 The first start downloads about 2 GB of weights into the `tts_kitten2_model_models` volume; `tts_kitten2_model_lb` waits for a healthy service
 (up to 300 s grace).
 
 ## 4. Connect callers
 
-1. Open `http://<machine-ip>:9250/admin/`, sign in with the admin password and create one token per caller
+1. Open `http://<machine-ip>:29323/admin/`, sign in with the admin password and create one token per caller
    (see [guide-web-ui.md](guide-web-ui.md)).
 2. The caller holds the URL and token:
-   - Caller on another machine: `http://<machine-ip>:9250`.
-   - Caller in a Docker stack on the same machine: `http://host.docker.internal:9250`.
+   - Caller on another machine: `http://<machine-ip>:29323`.
+   - Caller in a Docker stack on the same machine: `http://host.docker.internal:29323`.
 3. Try a call from the machine:
    ```bash
-   curl -X POST http://127.0.0.1:9250/v1/speak -H "Content-Type: application/json" -H "X-Internal-Token: kitten2_..." -d '{"text":"Hello from the model service."}' -o hello.wav
+   curl -X POST http://127.0.0.1:29323/v1/speak -H "Content-Type: application/json" -H "X-Internal-Token: kitten2_..." -d '{"text":"Hello from the model service."}' -o hello.wav
    ```
 
 ## Scaling
@@ -88,8 +88,8 @@ A plain publish (`run.bat`, Deploy, option 1) only updates the `live` branch. Fo
 
 | Symptom | Fix |
 |---|---|
-| Caller cannot reach the service | Check the caller's URL and token, and that `curl http://<machine-ip>:9250/health` works. |
+| Caller cannot reach the service | Check the caller's URL and token, and that `curl http://<machine-ip>:29323/health` works. |
 | nginx 502 after an update | `docker compose restart tts_kitten2_model_lb`. |
 | Permission denied on push | run.bat Deploy option 6. |
-| Port 9250 in use | Another stack on the machine already publishes it. |
+| Port 29323 in use | Another stack on the machine already publishes it. |
 | 503 `no GPU is visible here` | The `device` setting is `cuda` but the container has no GPU. Set it back to `cpu`. |

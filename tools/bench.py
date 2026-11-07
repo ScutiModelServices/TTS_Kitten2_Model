@@ -1,4 +1,4 @@
-"""Times one TTS service: py tools/bench.py http://127.0.0.1:9250 [--token T] [--voice V] [--runs 3] [--stream] [--save DIR]
+"""Times one TTS service: py tools/bench.py http://127.0.0.1:29323 [--token T] [--voice V] [--runs 3] [--stream] [--save DIR]
 
 Sends the same sentences to /v1/speak and prints, per sentence, the wait, the audio length and how many times faster
 than real time it was. Calls carry no seed, so the answer cache never serves them.

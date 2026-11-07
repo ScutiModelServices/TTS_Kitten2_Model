@@ -33,11 +33,11 @@ The model runs in this process on the **CPU** by default (torch, the `kittenml` 
 ## Run
 
 ```bash
-docker compose up -d --build        # http://<host>:9250
-python tools/bench.py http://127.0.0.1:9250 --save out
+docker compose up -d --build        # http://<host>:29323
+python tools/bench.py http://127.0.0.1:29323 --save out
 ```
 
-Without Docker: `run.bat` (uv, listens on `127.0.0.1:9250`, sets `PYTHONUTF8=1`). The first start downloads about 2 GB. See `deployment.md`.
+Without Docker: `run.bat` (uv, listens on `127.0.0.1:29323`, sets `PYTHONUTF8=1`). The first start downloads about 2 GB. See `deployment.md`.
 
 ## Tests
 

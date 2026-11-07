@@ -1,7 +1,7 @@
 # Deploying TTS_Kitten2_Model
 
-TTS_Kitten2_Model is one HTTP service (port 9250). It runs as `tts_kitten2_model` replicas behind an nginx load balancer,
-`tts_kitten2_model_lb`. Callers use `http://<host>:9250`; they never reach a replica directly.
+TTS_Kitten2_Model is one HTTP service (port 29323). It runs as `tts_kitten2_model` replicas behind an nginx load balancer,
+`tts_kitten2_model_lb`. Callers use `http://<host>:29323`; they never reach a replica directly.
 
 ## Ways to run it
 
