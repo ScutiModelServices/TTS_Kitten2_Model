@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- Renamed `TTSKitten2Model` to `TTS_Kitten2_Model`; Docker project, API image, services, load balancer and volumes now use `tts_kitten2_model` names. Callers on `citadel_core` connect to `tts_kitten2_model_lb` at the existing port.
+- Docker volume migration: existing volumes with old names are orphaned; renaming does not move data. Stop the old stack before copying; never use `down -v`. The commands below assume the previous default Compose project name; substitute actual volume names if `-p` or `COMPOSE_PROJECT_NAME` overrode it.
+  - `kitten2_models` → `tts_kitten2_model_models`: `docker volume inspect kitten2_models && docker volume create tts_kitten2_model_models && docker run --rm -v kitten2_models:/from:ro -v tts_kitten2_model_models:/to alpine:3.21 sh -c "cd /from && cp -a . /to/"`
+  - `kitten2_voices` → `tts_kitten2_model_voices`: `docker volume inspect kitten2_voices && docker volume create tts_kitten2_model_voices && docker run --rm -v kitten2_voices:/from:ro -v tts_kitten2_model_voices:/to alpine:3.21 sh -c "cd /from && cp -a . /to/"`
+  - `kitten2_tokens` → `tts_kitten2_model_data`: `docker volume inspect kitten2_tokens && docker volume create tts_kitten2_model_data && docker run --rm -v kitten2_tokens:/from:ro -v tts_kitten2_model_data:/to alpine:3.21 sh -c "cd /from && cp -a . /to/"`
+- To retain an old volume instead, set its top-level volume definition to `external: true` and `name: <old-volume-name>` in a local Compose override. Rollback: stop the renamed stack, restore the previous checkout and folder name, and restart the old stack with its original volumes; copy back newer data first if the renamed stack accepted writes.
+
 ## 0.1.0
 
 - First version: KittenTTS 2 (`KittenML/kitten-tts-2`, 1.7B, 115 built-in voices, voice cloning) on the CPU through the `kittenml` package, with the admin page, tokens (scope, rate limit, expiry), metrics, Settings card, update check, answer cache and Try it panel shared with the other model services.

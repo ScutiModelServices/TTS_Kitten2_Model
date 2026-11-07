@@ -1,7 +1,7 @@
-# TTSKitten2Model: Docker on a deployment machine
+# TTS_Kitten2_Model: Docker on a deployment machine
 
 Run KittenTTS 2 text to speech with voice cloning on the CPU (about 6 GB of RAM per replica) on a separate always-on machine (default `lex@scutiserver1.local`, folder
-`/media/ZimaOS-HD/Apps/TTSKitten2Model`). Callers reach it over the published port.
+`/media/ZimaOS-HD/Apps/TTS_Kitten2_Model`). Callers reach it over the published port.
 
 ## Requirements on the machine
 
@@ -11,7 +11,7 @@ Run KittenTTS 2 text to speech with voice cloning on the CPU (about 6 GB of RAM 
 
 ## 1. Publish the code (from your PC)
 
-Run `TTSKitten2Model\run.bat` and choose **Deploy** (or `run.bat deploy`). Menu:
+Run `TTS_Kitten2_Model\run.bat` and choose **Deploy** (or `run.bat deploy`). Menu:
 
 | Option | Does |
 |---|---|
@@ -29,14 +29,14 @@ Keep your own target in the git-ignored `tools\deploy.local.ini` (copy `tools\de
 
 ```bash
 mkdir -p /media/ZimaOS-HD/Apps
-git clone -b live <your-repo-url> /media/ZimaOS-HD/Apps/TTSKitten2Model
-cd /media/ZimaOS-HD/Apps/TTSKitten2Model
+git clone -b live <your-repo-url> /media/ZimaOS-HD/Apps/TTS_Kitten2_Model
+cd /media/ZimaOS-HD/Apps/TTS_Kitten2_Model
 ```
 Create `.env` (deploy option 2 copies yours, or `cp .env.example .env` and edit):
 - `KITTEN2_ADMIN_PASSWORD`: a real password.
 - `KITTEN2_REPLICAS=1` unless you have the memory for more.
 - `KITTEN2_PORT=9250` (published on all interfaces; firewall it if the LAN should not reach it, or bind it to
-  `127.0.0.1` in the `ports:` line of `kitten2_lb` when only callers on the machine need it).
+  `127.0.0.1` in the `ports:` line of `tts_kitten2_model_lb` when only callers on the machine need it).
 
 ## 3. Start
 
@@ -45,7 +45,7 @@ docker compose up -d --build
 docker compose ps
 curl http://127.0.0.1:9250/health
 ```
-The first start downloads about 2 GB of weights into the `models` volume; `kitten2_lb` waits for a healthy service
+The first start downloads about 2 GB of weights into the `tts_kitten2_model_models` volume; `tts_kitten2_model_lb` waits for a healthy service
 (up to 300 s grace).
 
 ## 4. Connect callers
@@ -64,7 +64,7 @@ The first start downloads about 2 GB of weights into the `models` volume; `kitte
 
 ```bash
 KITTEN2_REPLICAS=3 docker compose up -d --build
-docker compose restart kitten2_lb
+docker compose restart tts_kitten2_model_lb
 ```
 
 The restart is needed because nginx resolves replica addresses once at start.
@@ -72,24 +72,24 @@ The restart is needed because nginx resolves replica addresses once at start.
 ## Updating
 
 ```bash
-cd /media/ZimaOS-HD/Apps/TTSKitten2Model
+cd /media/ZimaOS-HD/Apps/TTS_Kitten2_Model
 git pull
 docker compose up -d --build
-docker compose restart kitten2_lb
+docker compose restart tts_kitten2_model_lb
 ```
 
 ## Releasing
 
 A plain publish (`run.bat`, Deploy, option 1) only updates the `live` branch. For a release set `VERSION` (and
 `pyproject.toml` to the same number), commit, then run `run.bat`, Deploy, option R or
-`py tools\publish_live.py --release`. `run.bat`, Build the release ZIP, then builds `_zip_versions\TTSKitten2Model-<VERSION>.zip`.
+`py tools\publish_live.py --release`. `run.bat`, Build the release ZIP, then builds `_zip_versions\TTS_Kitten2_Model-<VERSION>.zip`.
 
 ## Problems
 
 | Symptom | Fix |
 |---|---|
 | Caller cannot reach the service | Check the caller's URL and token, and that `curl http://<machine-ip>:9250/health` works. |
-| nginx 502 after an update | `docker compose restart kitten2_lb`. |
+| nginx 502 after an update | `docker compose restart tts_kitten2_model_lb`. |
 | Permission denied on push | run.bat Deploy option 6. |
 | Port 9250 in use | Another stack on the machine already publishes it. |
 | 503 `no GPU is visible here` | The `device` setting is `cuda` but the container has no GPU. Set it back to `cpu`. |

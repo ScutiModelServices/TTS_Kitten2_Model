@@ -2,13 +2,14 @@
 # process on the CPU, so RAM use is per replica (measure it; the model card gives no figure); the downloaded weights are
 # shared through the models volume, the cloned voices through the voices volume.
 # Start:  docker compose up -d --build          (callers use http://<host>:9250)
-# Scale:  KITTEN2_REPLICAS=2 docker compose up -d --build, then: docker compose restart kitten2_lb
+# Scale:  KITTEN2_REPLICAS=2 docker compose up -d --build, then: docker compose restart tts_kitten2_model_lb
 
-name: kitten2
+name: tts_kitten2_model
 
 services:
-  kitten2:
+  tts_kitten2_model:
     build: .
+    image: tts_kitten2_model:latest
     restart: unless-stopped
     mem_limit: ${KITTEN2_MEM_LIMIT:-0}  # 0 = no cap; a cap makes an out-of-memory kill stay inside this container
     environment:
@@ -16,9 +17,9 @@ services:
       KITTEN2_NUM_THREAD: ${KITTEN2_NUM_THREAD:-}
       KITTEN2_REPLICAS: ${KITTEN2_REPLICAS:-1}  # shown read-only on /admin/
     volumes:
-      - models:/models
-      - voices:/voices
-      - tokens:/data
+      - tts_kitten2_model_models:/models
+      - tts_kitten2_model_voices:/voices
+      - tts_kitten2_model_data:/data
     deploy:
       replicas: ${KITTEN2_REPLICAS:-1}
     healthcheck:
@@ -26,9 +27,10 @@ services:
       interval: 15s
       timeout: 5s
       start_period: 300s
-    networks: [kitten2]
+    networks: [tts_kitten2_model]
 
-  kitten2_lb:
+  tts_kitten2_model_lb:
+    container_name: tts_kitten2_model_lb
     image: nginx:1.27-alpine
     restart: unless-stopped
     ports:
@@ -36,15 +38,24 @@ services:
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
-      kitten2:
+      tts_kitten2_model:
         condition: service_healthy
-    networks: [kitten2]
+    networks:
+      tts_kitten2_model:
+      citadel:
+        aliases: [tts_kitten2_model_lb]
 
 volumes:
-  models:
-  voices:
-  tokens:
-
+  tts_kitten2_model_models:
+    name: tts_kitten2_model_models
+  tts_kitten2_model_voices:
+    name: tts_kitten2_model_voices
+  tts_kitten2_model_data:
+    name: tts_kitten2_model_data
 networks:
-  # Other stacks reach http://kitten2_lb:9250 by joining this network.
-  kitten2:
+  # Other stacks reach http://tts_kitten2_model_lb:9250 by joining this network.
+  tts_kitten2_model:
+    name: tts_kitten2_model
+  citadel:
+    name: citadel_core
+    external: true

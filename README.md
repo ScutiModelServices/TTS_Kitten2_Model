@@ -1,6 +1,6 @@
-# TTSKitten2Model
+# TTS_Kitten2_Model
 
-[KittenTTS 2](https://huggingface.co/KittenML/kitten-tts-2) text to speech (1.7B parameters, 115 built-in voices in 16 languages, zero-shot voice cloning), served over HTTP so projects send text instead of loading a model themselves. It has the same admin page, tokens, rate limits, metrics, settings and update checks as the other model services (`TTSParadeeModel`, `TTSPiperModel` and `TTSAudio8Model` have the same API shape).
+[KittenTTS 2](https://huggingface.co/KittenML/kitten-tts-2) text to speech (1.7B parameters, 115 built-in voices in 16 languages, zero-shot voice cloning), served over HTTP so projects send text instead of loading a model themselves. It has the same admin page, tokens, rate limits, metrics, settings and update checks as the other model services (`TTS_Paradee_Model`, `TTS_Piper_Model` and `TTS_Audio8_Model` have the same API shape).
 
 The model runs in this process on the **CPU** by default (torch, the `kittenml` package). It is heavy for a CPU: see *Limits worth knowing*. The weights are under the [Stellon Labs Community License](https://huggingface.co/KittenML/kitten-tts-2) (free for research, non-commercial and limited commercial use; a separate licence is needed above USD 1M annual revenue or total funding), not Apache 2.0.
 

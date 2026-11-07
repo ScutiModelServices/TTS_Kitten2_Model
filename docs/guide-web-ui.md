@@ -1,4 +1,4 @@
-# TTSKitten2Model: the admin web UI
+# TTS_Kitten2_Model: the admin web UI
 
 One page, `/admin/`, for tokens and CPU threads. It is the same for every way of running the service (Docker
 on the same device, Docker on a deployment device, no Docker). Only the address differs:
@@ -49,7 +49,7 @@ are approximate. Request counts are added to the file with that same write; uses
 counted in memory, so a crash can lose up to a minute of them. Old token files without the field still load and show **never** until next use. A companion
 `tokens.json.lock` file serializes updates across replicas without adding dependencies.
 
-Tokens live in `tokens.json` (`KITTEN2_TOKENS_FILE`). In Docker that is the `tokens` volume at `/data`, so they
+Tokens live in `tokens.json` (`KITTEN2_TOKENS_FILE`). In Docker that is the `tts_kitten2_model_data` volume at `/data`, so they
 survive `docker compose down` and rebuilds. Without Docker it is `tokens.json` in the folder the service starts from.
 Tokens are enforced only while `KITTEN2_ADMIN_PASSWORD` is set.
 
@@ -72,7 +72,7 @@ The muted line says **Replicas: N. Change KITTEN2_REPLICAS in .env, then rebuild
 page cannot change them. To change, set them in `.env`, then:
 ```bash
 docker compose up -d --build
-docker compose restart kitten2_lb
+docker compose restart tts_kitten2_model_lb
 ```
 `unknown` means the variable is not set, which is normal without Docker. Without Docker there is one process.
 
@@ -99,7 +99,7 @@ The page has no voice card yet. Add a voice with the admin password (`X-Internal
 curl -X PUT http://127.0.0.1:9250/admin/voices/anna -H "X-Internal-Token: $KITTEN2_ADMIN_PASSWORD" -H "Content-Type: application/json" \n  -d "{\"transcript\": \"What the clip says.\", \"audio_base64\": \"$(base64 -w0 anna.wav)\"}"
 ```
 
-`DELETE /admin/voices/anna` removes it. A name that a built-in voice already has (for example `Bruno`) is refused with `409`. Voices live in the `voices` volume, so every replica sees a change at once.
+`DELETE /admin/voices/anna` removes it. A name that a built-in voice already has (for example `Bruno`) is refused with `409`. Voices live in the `tts_kitten2_model_voices` volume, so every replica sees a change at once.
 
 ## Rate limit, expiry, edits, usage and metrics
 
@@ -119,7 +119,7 @@ The **Settings** card changes options without editing `.env` or restarting: upda
 The model revision is pinned, so the **Updates** card only reports a missing download. To move to a newer commit, read its model card and licence, change the *Model revision* setting, restart, then press **Download new weights**.
 That button fetches them into the models volume; every replica drops its old copy within a few seconds and loads the
 new one on its next request. Updating the service itself: `docker compose up -d --build`, then
-`docker compose restart kitten2_lb`.
+`docker compose restart tts_kitten2_model_lb`.
 
 ## Connect to this service
 

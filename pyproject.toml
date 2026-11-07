@@ -1,5 +1,5 @@
 [project]
-name = "kitten2-service"
+name = "tts_kitten2_model"
 description = "One HTTP service that runs KittenTTS 2 text to speech with voice cloning on the CPU for every project"
 version = "0.1.0"
 license = "MIT"

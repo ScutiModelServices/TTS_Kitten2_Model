@@ -1,4 +1,4 @@
-# TTSKitten2Model: without Docker, on Windows
+# TTS_Kitten2_Model: without Docker, on Windows
 
 Run KittenTTS 2 text to speech with voice cloning on the CPU (about 6 GB of RAM) directly with Python: one process, no load balancer, listening on `127.0.0.1:9250`.
 
@@ -8,12 +8,12 @@ Run KittenTTS 2 text to speech with voice cloning on the CPU (about 6 GB of RAM)
 - Internet on the first start (about 2 GB of weights).
 
 ## Start
-Double-click `run.bat`, or run it in a terminal from `TTSKitten2Model\`. Choose **1 Run the service** in the menu, or run `run.bat run` to skip the menu. It runs `uv sync` to create or update `.venv`, then starts
+Double-click `run.bat`, or run it in a terminal from `TTS_Kitten2_Model\`. Choose **1 Run the service** in the menu, or run `run.bat run` to skip the menu. It runs `uv sync` to create or update `.venv`, then starts
 `python src/app.py`. The first start downloads about 2 GB of weights. `run.bat` sets `PYTHONUTF8=1` (the model package reads files without an encoding, which fails on the Windows legacy code page); set it yourself when you start `python src/app.py` another way.
 
 Linux or macOS:
 ```bash
-cd TTSKitten2Model
+cd TTS_Kitten2_Model
 uv sync
 uv run python src/app.py
 ```
