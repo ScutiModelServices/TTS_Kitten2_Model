@@ -3,7 +3,7 @@
 Before the first call, open `/admin/` → **Updates** → **Download**. Startup never downloads weights. The [admin guide](guide-web-ui.md#updates-and-first-download) includes the curl alternative.
 
 Run KittenTTS 2 text to speech with voice cloning on the GPU when one is reserved, else the CPU (about 6 GB of RAM per replica on the CPU) on a separate always-on machine (default `lex@scutiserver1.local`, folder
-`/media/ZimaOS-HD/Apps/TTS_Kitten2_Model`). Callers reach it over the published port.
+`/media/ZimaOS-HD/Apps/ModelServices/TTS_Kitten2_Model`). Callers reach it over the published port.
 
 ## Requirements on the machine
 
@@ -30,9 +30,9 @@ Keep your own target in the git-ignored `tools\deploy.local.ini` (copy `tools\de
 ## 2. First-time setup on the machine
 
 ```bash
-mkdir -p /media/ZimaOS-HD/Apps
-git clone -b live <your-repo-url> /media/ZimaOS-HD/Apps/TTS_Kitten2_Model
-cd /media/ZimaOS-HD/Apps/TTS_Kitten2_Model
+mkdir -p /media/ZimaOS-HD/Apps/ModelServices
+git clone -b live <your-repo-url> /media/ZimaOS-HD/Apps/ModelServices/TTS_Kitten2_Model
+cd /media/ZimaOS-HD/Apps/ModelServices/TTS_Kitten2_Model
 ```
 Create `.env` (deploy option 2 copies yours, or `cp .env.example .env` and edit):
 - `SERVICE_ADMIN_PASSWORD`: a real password.
@@ -74,7 +74,7 @@ The restart is needed because nginx resolves replica addresses once at start.
 ## Updating
 
 ```bash
-cd /media/ZimaOS-HD/Apps/TTS_Kitten2_Model
+cd /media/ZimaOS-HD/Apps/ModelServices/TTS_Kitten2_Model
 git pull
 docker compose up -d --build
 docker compose restart tts_kitten2_model_lb
