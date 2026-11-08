@@ -49,7 +49,7 @@ class SpeakRequest(BaseModel):
     normalize: bool = True  # expand "$12.50" into words; send false for non-English text (the normalizer is English-tuned)
     stream: bool = False  # true: the WAV is sent piece by piece, so audio starts sooner; its header has no length
     # A cloned voice for this call only (instead of `voice`): used while the audio is made, then deleted; never stored or cached.
-    reference_audio_base64: str | None = Field(None, min_length=1, max_length=MAX_WAV_BYTES * 4 // 3 + 8)  # a WAV clip
+    reference_audio_base64: str | None = Field(None, min_length=1, max_length=MAX_WAV_BYTES * 4 // 3 + 64)  # a WAV clip, base64 or a data: URL (the Try it panel sends one)
     reference_text: str | None = Field(None, min_length=1, max_length=2000)  # exactly what the clip says
 
 
@@ -247,7 +247,9 @@ def create_app(client: Kitten2Engine | None = None, admin_password: str | None =
         if allowed is not None:
             raise HTTPException(403, "This token is limited to certain voices and may not send its own reference")
         try:
-            wav = base64.b64decode(body.reference_audio_base64, validate=True)
+            data = body.reference_audio_base64
+            data = data.partition(",")[2] if data.startswith("data:") else data
+            wav = base64.b64decode(data, validate=True)
             check_clip(wav, body.reference_text)
         except (binascii.Error, ValueError) as error:
             raise HTTPException(422, str(error)) from None
