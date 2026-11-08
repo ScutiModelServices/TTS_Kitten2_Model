@@ -82,28 +82,29 @@ class Speaker:
         return args
 
 
-def _snapshot(model_id: str, revision: str, weights: str, decoder: str, local_only: bool = False) -> Path:
+def _snapshot(model_id: str, revision: str, weights: str, decoder: str) -> Path:
     """The files this setup needs, from the pinned revision. `_kitten2_files` is the package's own list of them
     (private, but it is what keeps the download at about 1 GB instead of 8)."""
     from huggingface_hub import hf_hub_download, snapshot_download
     from kittenml.get_model import _kitten2_files
 
-    config = json.loads(Path(hf_hub_download(model_id, "config.json", revision=revision, local_files_only=local_only)).read_text("utf-8"))
+    config = json.loads(Path(hf_hub_download(model_id, "config.json", revision=revision, local_files_only=True)).read_text("utf-8"))
     return Path(snapshot_download(model_id, revision=revision, allow_patterns=_kitten2_files(config, decoder, weights),
-                                  local_files_only=local_only))
+                                  local_files_only=True))
 
 
 def load(model_id: str, revision: str, device: str, weights: str, decoder: str) -> Speaker:
-    """Downloads (first time) and loads the model. Blocking: run it in a thread."""
+    """Loads the downloaded pinned model without network access. Blocking: run it in a thread."""
     import torch
     from kittenml import KittenTTS
 
+    local_folder = _snapshot(model_id, revision, weights, decoder)
     if device == "auto":  # the GPU when torch sees one, else the CPU
         device = "cuda" if torch.cuda.is_available() else "cpu"
     if device.startswith("cuda") and not torch.cuda.is_available():
         raise EngineError("The device is cuda but no GPU is visible here. Set the device to cpu.", 503)
     try:
-        model = KittenTTS(str(_snapshot(model_id, revision, weights, decoder)), device=device, weights=weights, decoder=decoder)
+        model = KittenTTS(str(local_folder), device=device, weights=weights, decoder=decoder)
     except UnicodeError:
         raise  # a real fault (on Windows: run with PYTHONUTF8=1), not a bad setting
     except ValueError as error:  # an unknown weights or decoder name
@@ -129,7 +130,11 @@ def _cached_sha(model_id: str, revision: str) -> str | None:
 
 
 def _download(model_id: str, revision: str, weights: str, decoder: str) -> None:
-    _snapshot(model_id, revision, weights, decoder)
+    from huggingface_hub import hf_hub_download, snapshot_download
+    from kittenml.get_model import _kitten2_files
+
+    config = json.loads(Path(hf_hub_download(model_id, "config.json", revision=revision, token=False)).read_text("utf-8"))
+    snapshot_download(model_id, revision=revision, allow_patterns=_kitten2_files(config, decoder, weights), token=False)
 
 
 def default_marker() -> Path:
@@ -141,7 +146,7 @@ def default_marker() -> Path:
 def builtin_names(model_id: str, revision: str, weights: str, decoder: str) -> list[str]:
     """The built-in voices from the downloaded `voices/voices.json`, or [] before the first download."""
     try:
-        return sorted(json.loads((_snapshot(model_id, revision, weights, decoder, local_only=True) / "voices" / "voices.json").read_text("utf-8")))
+        return sorted(json.loads((_snapshot(model_id, revision, weights, decoder) / "voices" / "voices.json").read_text("utf-8")))
     except Exception:
         return []
 
@@ -203,7 +208,10 @@ class Kitten2Engine:
     def _speaker(self) -> Speaker:
         with self._load_lock:
             if self._loaded is None:
-                self._loaded = self._loader(self.model, self.revision, self.device, self.weights, self.decoder)
+                try:
+                    self._loaded = self._loader(self.model, self.revision, self.device, self.weights, self.decoder)
+                except OSError:
+                    raise EngineError("Model weights are not downloaded. Ask an admin to press Download on the Updates card.", 503) from None
             return self._loaded
 
     def _voice(self, voice: str | None) -> tuple[str, tuple[Path, str] | None]:

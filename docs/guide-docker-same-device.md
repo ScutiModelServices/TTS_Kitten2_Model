@@ -1,11 +1,13 @@
 # TTS_Kitten2_Model: Docker Desktop on this PC
 
+Before the first call, open `/admin/` → **Updates** → **Download**. Startup never downloads weights. The [admin guide](guide-web-ui.md#updates-and-first-download) includes the curl alternative.
+
 Run KittenTTS 2 text to speech with voice cloning on the GPU when one is reserved, else the CPU (about 6 GB of RAM on the CPU), in Docker Desktop on the machine you work on, so other programs on it can call it.
 
 ## Requirements
 
 - Docker Desktop with Compose v2 (Windows: WSL2 backend).
-- Network access on the first start to download about 2 GB from Hugging Face into the `tts_kitten2_model_models` volume.
+- Network access for explicit Downloads from the Updates card; startup and inference use downloaded files only.
 - RAM per replica: about 5.7 GB resident after loading and 6.1 GB peak (measured on a Ryzen 7 7445HS, `packed` weights). Plan for 8 GB free per replica.
 - Compose reserves one NVIDIA GPU (NVIDIA Container Toolkit; Docker Desktop on Windows: WSL2 backend with GPU support). On a host without one, delete the `resources:` block under `deploy:` in `docker-compose.yml`; it then runs on the CPU, and the model is heavy there: see "Hardware" below.
 
@@ -15,13 +17,13 @@ Run KittenTTS 2 text to speech with voice cloning on the GPU when one is reserve
    ```bash
    cp .env.example .env
    ```
-   Set `SERVICE_ADMIN_PASSWORD` (empty = no auth and no admin page, fine for a local test). Leave `SERVICE_PORT=29323`. Leave `SERVICE_REPLICAS=1`.
+   Set `SERVICE_ADMIN_PASSWORD` (required to download weights through the admin page). Leave `SERVICE_PORT=29323`. Leave `SERVICE_REPLICAS=1`.
 2. Start:
    ```bash
    docker compose up -d --build
    ```
-   The first start downloads about 2 GB of weights into the `tts_kitten2_model_models` volume. `tts_kitten2_model_lb` starts only after the service is healthy
-   (up to 300 s grace). Watch with `docker compose ps` and `docker compose logs -f tts_kitten2_model`.
+   Startup loads downloaded weights only; open `/admin/`, then **Updates → Download** before the first call. `tts_kitten2_model_lb` starts once `/health` answers; readiness may still be false
+   (300 s startup grace). Watch with `docker compose ps` and `docker compose logs -f tts_kitten2_model`.
 3. Check:
    ```bash
    curl http://127.0.0.1:29323/health
@@ -76,11 +78,11 @@ python tools/bench.py http://127.0.0.1:29323 --save out
 | Symptom | Fix |
 |---|---|
 | `address already in use` on 29323 | Another copy (`run.bat`, or the same stack on another compose project) is running. Stop it or change `SERVICE_PORT`. |
-| `/health` shows `ready: false` for minutes | First start: the weights are downloading or loading. Check `docker compose logs -f tts_kitten2_model`. |
+| `/health` shows `ready: false` for minutes | Download weights from the Updates card first; otherwise the service stays available with `ready: false`. Check `docker compose logs -f tts_kitten2_model`. |
 | 401 Invalid token | The caller's token is missing or revoked; make one on `/admin/`. |
 | 503 `no GPU is visible here` | The `device` setting is `cuda` but the container has no GPU. Set it back to `cpu`. |
 | Container restarts in a loop | Out of RAM (about 6 GB per replica). Close other programs, or set `SERVICE_MEM_LIMIT` to find the limit. |
-| `tts_kitten2_model_lb` never starts | No replica is healthy yet (first download, or out of memory). `docker compose logs tts_kitten2_model`. |
+| `tts_kitten2_model_lb` never starts | No replica is healthy yet (process failure or out of memory). `docker compose logs tts_kitten2_model`. |
 | Replicas restart in a loop | Out of RAM (about 6 GB per replica). Lower `SERVICE_REPLICAS`, or check `docker compose logs tts_kitten2_model`. |
 | 403 "may not use voice" | The token's list on `/admin/` does not include that voice (or `Bruno`, the default, when `voice` is left out). |
 | 404 on `/v1/speak` | The voice is not served here. `GET /v1/voices` lists them. |

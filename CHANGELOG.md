@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Breaking: startup, warm-up and inference load downloaded weights only. Before the first call, open `/admin/` → Updates → Download (or POST `/admin/updates/weights` with the admin token). Missing weights leave health/admin available and speech returns 503. Checks never download; explicit Downloads invalidate every replica.
+
 - `device` setting accepts `auto` (new default): `cuda` when torch sees a GPU, else `cpu`.
 - Torch now comes from the CUDA index (`cu126`, pinned `torch==2.7.1` like TTS_Audio8_Model), so the venv and the image grow by about 4.5 GB. The Dockerfile no longer asserts CPU-only torch and compose reserves one NVIDIA GPU (needs the NVIDIA Container Toolkit; a host without a GPU must delete the `resources:` block in `docker-compose.yml`).
 

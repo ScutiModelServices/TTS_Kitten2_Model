@@ -1,15 +1,17 @@
 # TTS_Kitten2_Model: without Docker, on Windows
 
+Before the first call, open `/admin/` → **Updates** → **Download**. Startup never downloads weights. The [admin guide](guide-web-ui.md#updates-and-first-download) includes the curl alternative.
+
 Run KittenTTS 2 text to speech with voice cloning on the GPU when one is visible, else the CPU (about 6 GB of RAM on the CPU), directly with Python: one process, no load balancer, listening on `127.0.0.1:29323`.
 
 ## Requirements
 - Windows with Python 3.11 or newer and uv (`winget install astral-sh.uv`).
 - Enough RAM: about 6 GB free. The `uv.lock` has the CUDA build of torch (the venv is about 5 GB); a GPU is optional.
-- Internet on the first start (about 2 GB of weights).
+- Internet only when an admin presses Download on the Updates card.
 
 ## Start
 Double-click `run.bat`, or run it in a terminal from `TTS_Kitten2_Model\`. Choose **1 Run the service** in the menu, or run `run.bat run` to skip the menu. It runs `uv sync` to create or update `.venv`, then starts
-`python src/app.py`. The first start downloads about 2 GB of weights. `run.bat` sets `PYTHONUTF8=1` (the model package reads files without an encoding, which fails on the Windows legacy code page); set it yourself when you start `python src/app.py` another way.
+`python src/app.py`. Startup loads downloaded weights only; open `/admin/`, then **Updates → Download** before the first call. `run.bat` sets `PYTHONUTF8=1` (the model package reads files without an encoding, which fails on the Windows legacy code page); set it yourself when you start `python src/app.py` another way.
 
 Linux or macOS:
 ```bash
