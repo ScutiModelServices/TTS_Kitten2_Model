@@ -25,12 +25,12 @@ from starlette.concurrency import run_in_threadpool
 from pydantic import BaseModel, ConfigDict, Field
 
 from audio import AudioCache, wav_bytes, wav_header
-from engine import DEFAULT_REVISION, EngineError, Kitten2Engine, default_marker
+from engine import DEFAULT_REVISION, ONE_CALL_VOICE, EngineError, Kitten2Engine, default_marker
 from options import SETTINGS
 import settings
 from tokens import LatencyHistogram, TokenStore
 from updates import Updates
-from voices import MAX_WAV_BYTES, NAME
+from voices import MAX_WAV_BYTES, NAME, check_clip
 
 _log = logging.getLogger(__name__)
 
@@ -48,6 +48,9 @@ class SpeakRequest(BaseModel):
     preset: str | None = Field(None, max_length=32)  # stable (default) or expressive; the engine answers 422 for another name
     normalize: bool = True  # expand "$12.50" into words; send false for non-English text (the normalizer is English-tuned)
     stream: bool = False  # true: the WAV is sent piece by piece, so audio starts sooner; its header has no length
+    # A cloned voice for this call only (instead of `voice`): used while the audio is made, then deleted; never stored or cached.
+    reference_audio_base64: str | None = Field(None, min_length=1, max_length=MAX_WAV_BYTES * 4 // 3 + 8)  # a WAV clip
+    reference_text: str | None = Field(None, min_length=1, max_length=2000)  # exactly what the clip says
 
 
 class VoiceUpload(BaseModel):
@@ -205,21 +208,24 @@ def create_app(client: Kitten2Engine | None = None, admin_password: str | None =
 
     @app.post("/v1/speak")
     async def speak(body: SpeakRequest, allowed: list[str] | None = Depends(authorize), _slot: None = Depends(slot)) -> Response:
-        name = body.voice or client.default_voice
-        check_scope(allowed, name)
+        clip = one_call_clip(body, allowed)
+        name = ONE_CALL_VOICE if clip else body.voice or client.default_voice
+        if not clip:
+            check_scope(allowed, name)
         started = time.perf_counter()
         size = cache_limit()
         seed = body.seed if body.seed is not None else secrets.randbelow(MAX_SEED + 1)
         key = (client.generation, name, body.preset, body.temperature, body.normalize, seed, body.text)
-        audio = cache.get(key, size) if body.seed is not None else None
+        audio = cache.get(key, size) if body.seed is not None and not clip else None
         if audio is not None:
             return wav_reply(audio, started, "hit")
         # Without a seed the call can never repeat, so keeping its answer would only fill the cache.
-        keep = size if body.seed is not None else 0
+        # A one-call voice is never cached: nothing made from it stays on the server.
+        keep = size if body.seed is not None and not clip else 0
         try:
             if body.stream:
-                return await stream_reply(body, name, seed, key, keep)
-            audio = await client.synthesize(body.text, name, seed, body.temperature, body.preset, body.normalize)
+                return await stream_reply(body, name, seed, key, keep, clip)
+            audio = await client.synthesize(body.text, name, seed, body.temperature, body.preset, body.normalize, clip=clip)
         except EngineError as error:
             raise HTTPException(error.status or 500, str(error)) from None
         except Exception:
@@ -229,15 +235,34 @@ def create_app(client: Kitten2Engine | None = None, admin_password: str | None =
         cache.put(key, audio, keep)
         return wav_reply(audio, started, "miss")
 
+    def one_call_clip(body: SpeakRequest, allowed: list[str] | None) -> tuple[bytes, str] | None:
+        """The (WAV, transcript) of a one-call cloned voice, or None. Needs both fields, no `voice`, and a token that
+        is not limited to certain voices (a limited token may only use the voices listed for it)."""
+        if body.reference_audio_base64 is None and body.reference_text is None:
+            return None
+        if body.reference_audio_base64 is None or body.reference_text is None:
+            raise HTTPException(422, "reference_audio_base64 and reference_text go together")
+        if body.voice is not None:
+            raise HTTPException(422, "Send either voice or a one-call reference, not both")
+        if allowed is not None:
+            raise HTTPException(403, "This token is limited to certain voices and may not send its own reference")
+        try:
+            wav = base64.b64decode(body.reference_audio_base64, validate=True)
+            check_clip(wav, body.reference_text)
+        except (binascii.Error, ValueError) as error:
+            raise HTTPException(422, str(error)) from None
+        return wav, body.reference_text.strip()
+
     def wav_reply(audio: dict[str, Any], started: float, cached: str) -> Response:
         return Response(audio["wav"], media_type="audio/wav", headers={
             "X-Audio-Seconds": f"{audio['seconds']:.3f}", "X-Voice": audio["voice"], "X-Seed": str(audio["seed"]), "X-Cache": cached,
             "X-Duration-Ms": str(round((time.perf_counter() - started) * 1000))})
 
-    async def stream_reply(body: SpeakRequest, name: str, seed: int, key: tuple, size: int) -> StreamingResponse:
+    async def stream_reply(body: SpeakRequest, name: str, seed: int, key: tuple, size: int,
+                           clip: tuple[bytes, str] | None = None) -> StreamingResponse:
         """Starts the audio before the text is finished. The first piece is made here, so an unknown voice or a
         failed model still gives a proper HTTP error; once the stream has begun an error can only cut it off."""
-        pieces = client.stream(body.text, name, seed, body.temperature, body.preset, body.normalize)  # one piece per chunk of about 380 characters
+        pieces = client.stream(body.text, name, seed, body.temperature, body.preset, body.normalize, clip=clip)  # one piece per chunk of about 380 characters
         try:
             rate, first = await anext(pieces)
         except BaseException:

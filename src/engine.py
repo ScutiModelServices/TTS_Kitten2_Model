@@ -16,6 +16,7 @@ import json
 import logging
 import os
 import random
+import tempfile
 import threading
 import uuid
 from pathlib import Path
@@ -80,6 +81,17 @@ class Speaker:
         else:
             args["voice"] = voice
         return args
+
+
+ONE_CALL_VOICE = "custom"  # X-Voice of a call that sent its own reference clip
+
+
+def _write_temp_clip(wav: bytes) -> Path:
+    """The one-call reference clip as a file the model can read; the caller deletes it."""
+    handle, name = tempfile.mkstemp(prefix="kitten2-ref-", suffix=".wav")
+    with os.fdopen(handle, "wb") as file:
+        file.write(wav)
+    return Path(name)
 
 
 def _snapshot(model_id: str, revision: str, weights: str, decoder: str) -> Path:
@@ -232,39 +244,57 @@ class Kitten2Engine:
         return preset or PRESETS[0]
 
     async def synthesize(self, text: str, voice: str | None, seed: int | None, temperature: float | None,
-                         preset: str | None = None, normalize: bool = True) -> dict[str, Any]:
-        name, reference = self._voice(voice)
+                         preset: str | None = None, normalize: bool = True, clip: tuple[bytes, str] | None = None) -> dict[str, Any]:
+        """`clip` = (WAV bytes, transcript) of a one-call reference voice: written to a temp file only while the audio
+        is made, deleted when the call ends or fails, never kept."""
+        name, reference = (ONE_CALL_VOICE, None) if clip else self._voice(voice)
         preset = self._check(preset)
         seed = random.getrandbits(62) if seed is None else seed
         async with self._gate:
             loaded = await asyncio.to_thread(self._speaker)
+            temp: Path | None = None
             try:
+                if clip:
+                    temp = await asyncio.to_thread(_write_temp_clip, clip[0])
+                    reference = (temp, clip[1])
                 pcm = await asyncio.to_thread(loaded.speak, text, name, reference, seed, temperature, preset, normalize,
                                               self.max_new_tokens, self._threads)
             except ValueError as error:  # "no text to speak", "no speech found in the reference clip"
                 raise EngineError(str(error), 422) from None
             except RuntimeError as error:  # "the model produced no audio tokens"
                 raise EngineError(str(error), 422) from None
+            finally:
+                if temp is not None:
+                    temp.unlink(missing_ok=True)
         return {"wav": wav_bytes(pcm, loaded.rate), "seconds": len(pcm) / 2 / loaded.rate, "voice": name}
 
     async def stream(self, text: str, voice: str | None, seed: int | None, temperature: float | None, preset: str | None = None,
-                     normalize: bool = True) -> AsyncIterator[tuple[int, bytes]]:
+                     normalize: bool = True, clip: tuple[bytes, str] | None = None) -> AsyncIterator[tuple[int, bytes]]:
         """The audio as it is made: (sample rate, 16-bit mono PCM) per chunk of text. Holds the generation slot until
-        the last piece, or until the caller closes the iterator."""
-        name, reference = self._voice(voice)
+        the last piece, or until the caller closes the iterator. `clip` as in `synthesize`: the temp file is deleted
+        when the iterator ends, fails or is closed."""
+        name, reference = (ONE_CALL_VOICE, None) if clip else self._voice(voice)
         preset = self._check(preset)
         seed = random.getrandbits(62) if seed is None else seed
         async with self._gate:
             loaded = await asyncio.to_thread(self._speaker)
-            pieces = loaded.pieces(text, name, reference, seed, temperature, preset, normalize, self.max_new_tokens, self._threads)
-            while True:
-                try:
-                    piece = await asyncio.to_thread(next, pieces, None)
-                except ValueError as error:
-                    raise EngineError(str(error), 422) from None
-                if piece is None:
-                    break
-                yield loaded.rate, piece
+            temp: Path | None = None
+            try:
+                if clip:
+                    temp = await asyncio.to_thread(_write_temp_clip, clip[0])
+                    reference = (temp, clip[1])
+                pieces = loaded.pieces(text, name, reference, seed, temperature, preset, normalize, self.max_new_tokens, self._threads)
+                while True:
+                    try:
+                        piece = await asyncio.to_thread(next, pieces, None)
+                    except ValueError as error:
+                        raise EngineError(str(error), 422) from None
+                    if piece is None:
+                        break
+                    yield loaded.rate, piece
+            finally:
+                if temp is not None:
+                    temp.unlink(missing_ok=True)
 
     # Updates: the Hub revision of the model files, shared by all replicas through one models volume.
 

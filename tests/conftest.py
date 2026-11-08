@@ -24,12 +24,16 @@ class FakeSpeaker:
 
     def __init__(self):
         self.calls = []
+        self.fail = False
 
     def _record(self, text, voice, reference, seed, temperature, preset, normalize, max_new_tokens, threads):
         if not text.strip(" ."):
             raise ValueError("no text to speak")
         self.calls.append({"text": text, "voice": voice, "reference": reference, "seed": seed, "temperature": temperature,
-                           "preset": preset, "normalize": normalize, "max_new_tokens": max_new_tokens, "threads": threads})
+                           "preset": preset, "normalize": normalize, "max_new_tokens": max_new_tokens, "threads": threads,
+                           "reference_bytes": reference[0].read_bytes() if reference else None})  # read now: a one-call clip is deleted later
+        if self.fail:
+            raise RuntimeError("model crashed")
 
     def speak(self, *args):
         self._record(*args)

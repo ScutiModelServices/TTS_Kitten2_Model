@@ -17,6 +17,16 @@ def voices_dir() -> Path:
     return Path(os.environ.get("SERVICE_VOICES_DIR") or "_voices").expanduser()
 
 
+def check_clip(wav: bytes, transcript: str) -> None:
+    """Raises ValueError unless `wav` is a usable reference clip and `transcript` is not empty."""
+    if wav[:4] != b"RIFF" or wav[8:12] != b"WAVE":
+        raise ValueError("The reference clip must be a WAV file")
+    if not 0 < len(wav) <= MAX_WAV_BYTES:
+        raise ValueError(f"The reference clip must be 1 byte to {MAX_WAV_BYTES} bytes")
+    if not transcript.strip():
+        raise ValueError("The transcript must not be empty")
+
+
 class VoiceStore:
     """A folder of `<name>.wav` + `<name>.txt`. Read again on every call, so a voice added through one replica is
     visible to the others at once."""
@@ -42,12 +52,7 @@ class VoiceStore:
     def put(self, name: str, wav: bytes, transcript: str) -> None:
         if not NAME.match(name):
             raise ValueError(f"{name!r} is not a valid voice name")
-        if wav[:4] != b"RIFF" or wav[8:12] != b"WAVE":
-            raise ValueError("The reference clip must be a WAV file")
-        if not 0 < len(wav) <= MAX_WAV_BYTES:
-            raise ValueError(f"The reference clip must be 1 byte to {MAX_WAV_BYTES} bytes")
-        if not transcript.strip():
-            raise ValueError("The transcript must not be empty")
+        check_clip(wav, transcript)
         self.folder.mkdir(parents=True, exist_ok=True)
         # The transcript goes first: a voice exists only when both files do, so a half-written one is never listed.
         self._write(self.folder / f"{name}.txt", transcript.strip().encode("utf-8"))

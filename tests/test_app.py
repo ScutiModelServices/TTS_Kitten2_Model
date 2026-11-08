@@ -128,7 +128,7 @@ def test_unknown_voice_is_404_and_a_crash_is_500():
     assert client().post("/v1/speak", json={**BODY, "voice": "zz_nobody"}).status_code == 404
 
     class Broken:
-        async def synthesize(self, *args):
+        async def synthesize(self, *args, **kwargs):
             raise error
 
         async def close(self):
@@ -173,6 +173,62 @@ def test_bad_voice_uploads_are_422(tmp_path):
                        ("anna", {**CLIP, "transcript": " "}), ("anna", {**CLIP, "extra": 1})):
         assert c.put(f"/admin/voices/{name}", json=body, headers=ADMIN).status_code == 422
     assert engine.voices == BUILTIN
+
+
+ONE_CALL = {"reference_audio_base64": base64.b64encode(WAV).decode(), "reference_text": "What the clip says."}
+
+
+@pytest.fixture
+def temp_dir(tmp_path, monkeypatch):
+    """The folder temp files go to, so a test can see that nothing is left in it."""
+    folder = tmp_path / "tmp"
+    folder.mkdir()
+    monkeypatch.setattr("tempfile.tempdir", str(folder))
+    return folder
+
+
+@pytest.mark.parametrize("stream", [False, True])
+def test_a_one_call_reference_is_used_then_deleted_and_never_stored_or_cached(temp_dir, stream):
+    engine = make_engine()
+    c = client(engine, cache_size=4)
+    body = {**SEEDED, **ONE_CALL, "stream": stream}
+    first, second = c.post("/v1/speak", json=body), c.post("/v1/speak", json=body)
+    assert first.status_code == 200 and first.headers["X-Voice"] == "custom"
+    assert (first.headers["X-Cache"], second.headers["X-Cache"]) == ("miss", "miss")  # a cloned voice is never cached
+    assert [call["reference_bytes"] for call in engine.made[0].calls] == [WAV, WAV]
+    assert engine.made[0].calls[0]["reference"][1] == "What the clip says."
+    assert list(temp_dir.iterdir()) == [] and engine.store.names() == []
+    assert not (engine.store.folder.exists() and any(engine.store.folder.iterdir()))
+
+
+@pytest.mark.parametrize("stream", [False, True])
+def test_a_one_call_reference_is_deleted_when_the_model_fails(temp_dir, stream):
+    engine = make_engine()
+    c = client(engine)
+    c.post("/v1/speak", json=BODY)  # loads the fake model
+    engine.made[0].fail = True
+    assert c.post("/v1/speak", json={**BODY, **ONE_CALL, "stream": stream}).status_code >= 400
+    assert list(temp_dir.iterdir()) == []
+
+
+def test_a_bad_one_call_reference_is_refused_before_any_work(temp_dir):
+    engine = make_engine()
+    c = client(engine)
+    audio, text = ONE_CALL["reference_audio_base64"], ONE_CALL["reference_text"]
+    for extra in ({"reference_audio_base64": audio}, {"reference_text": text}, {**ONE_CALL, "voice": BUILTIN[0]},
+                  {**ONE_CALL, "reference_audio_base64": "!!not base64!!"},
+                  {**ONE_CALL, "reference_audio_base64": base64.b64encode(b"not a wav file").decode()},
+                  {**ONE_CALL, "reference_text": " "}):
+        assert c.post("/v1/speak", json={**BODY, **extra}).status_code == 422
+    assert not engine.made and list(temp_dir.iterdir()) == []
+
+
+def test_a_token_limited_to_voices_may_not_send_its_own_reference(tmp_path):
+    c = client(make_engine(), admin_password="admin", tokens=TokenStore(tmp_path / "t.json"))
+    limited = {"X-Internal-Token": c.post("/admin/tokens", json={"name": "p", "projects": [BUILTIN[0]]}, headers=ADMIN).json()["token"]}
+    free = {"X-Internal-Token": c.post("/admin/tokens", json={"name": "f"}, headers=ADMIN).json()["token"]}
+    assert c.post("/v1/speak", json={**BODY, **ONE_CALL}, headers=limited).status_code == 403
+    assert c.post("/v1/speak", json={**BODY, **ONE_CALL}, headers=free).status_code == 200
 
 
 def test_each_caller_gets_its_own_revocable_token(tmp_path):

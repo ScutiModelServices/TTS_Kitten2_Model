@@ -8,13 +8,15 @@ The model runs in this process on the **CPU** by default (torch, the `kittenml` 
 
 | Call | Purpose |
 |---|---|
-| `POST /v1/speak` | `{"text", "voice", "seed", "temperature", "preset", "normalize", "stream"}` returns a WAV file (`audio/wav`, 16-bit mono, 24 kHz). Headers: `X-Audio-Seconds`, `X-Duration-Ms`, `X-Voice`, `X-Seed`, `X-Cache` (`hit` when the kept answer was sent). |
+| `POST /v1/speak` | `{"text", "voice", "seed", "temperature", "preset", "normalize", "stream", "reference_audio_base64", "reference_text"}` returns a WAV file (`audio/wav`, 16-bit mono, 24 kHz). Headers: `X-Audio-Seconds`, `X-Duration-Ms`, `X-Voice`, `X-Seed`, `X-Cache` (`hit` when the kept answer was sent). |
 | `GET /v1/voices` | `{"voices", "default"}` (built-in and cloned); with a token limited to voices, only those. |
 | `PUT /admin/voices/{name}` | Admin password. `{"audio_base64", "transcript"}`: a WAV clip (at most 10 MB; the model wants 5 to 30 seconds of one speaker) and exactly what it says. Adds or replaces a cloned voice. A built-in voice name gets 409. |
 | `DELETE /admin/voices/{name}` | Admin password. Removes a cloned voice. |
 | `GET /health` | `{"status": "ok", "model", "ready", "num_thread", "device", "voices"}`; `ready` is true once the model is loaded. No token needed. |
 
 `text` is 1 to 5000 characters. Other fields are refused with 422. The model splits long text itself into chunks of about 380 characters and joins the audio.
+
+**One-call voice (nothing kept).** Instead of a `voice`, send `reference_audio_base64` (a WAV, up to 10 MB) and `reference_text` (exactly what it says). The clip is written to a temp file only while the speech is made and deleted when the call ends, fails or the client disconnects, streams included. It is never added to the voices volume, and the answer is never cached, even with a `seed`. `X-Voice` is `custom`. Both fields are required together; a `voice` beside them gives 422, and a token limited to certain voices gets 403. The Try it panel does not send these fields yet.
 
 **Voices.** The default is `Bruno`. Names such as `Bella`, `Jasper`, `Luna`, `Bruno`, `Rosie`, `Hugo`, `Kiki` and `Leo` are English; a voice named for a language (`SpanishAbuela`, `JapaneseTrainConductor`, `German`) is how you reach that language, since the voice carries the accent. A cloned voice is a reference clip and its transcript; the transcript is always given, so the model's Whisper step is never loaded. A token's *projects* list on the admin page limits the voices it may use.
 
