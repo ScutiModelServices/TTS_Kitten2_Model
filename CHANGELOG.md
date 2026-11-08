@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Fix: after Download, a CPU threads change or a sync from another replica drops the loaded model, the service now reloads it in the background (when "Load the model at start" is on) instead of showing "Starting" on `/admin/` until the first request.
 - `POST /v1/speak` accepts a one-call cloned voice: `reference_audio_base64` + `reference_text` instead of `voice`. The clip lives in a temp file only while the speech is made, is deleted when the call ends, fails or is closed (streams too), is never stored in the voices volume, and its answers are never cached. `X-Voice` is `custom`; a token limited to certain voices gets 403. The audio may be a `data:` URL; the admin **Try it** panel has fields for it. Same change in TTS_Audio8_Model.
 
 - Breaking: startup, warm-up and inference load downloaded weights only. Before the first call, open `/admin/` → Updates → Download (or POST `/admin/updates/weights` with the admin token). Missing weights leave health/admin available and speech returns 503. Checks never download; explicit Downloads invalidate every replica.
