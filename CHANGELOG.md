@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Admin page: the CPU threads card and tile are hidden when `CONFIG.tags` has `host-threads`, and the Project models card is shown only with `project-models`.
+
 - Admin page: `CONFIG.tags` (same tags as `docs/purpose.md`) switch tag-driven notes: `gpu` shows a CPU-threads note, `license-restricted` shows a licence note on the Updates card.
 
 - Admin page: **Cloned voices** card (add, list, delete) and `GET /admin/voices` (admin password; each voice with `cloned` true or false). The page shows it because `CONFIG.tags` in `web/index.html` holds `voice-cloning`; `purpose_audit.py` checks that `CONFIG.tags` equals the tags in `docs/purpose.md`.
