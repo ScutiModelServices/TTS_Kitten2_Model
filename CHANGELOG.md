@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Fix: a caller that hangs up before the first piece of speech is ready now stops the generation after the piece being made, instead of speaking the whole text for nobody (a following call waited 87 s on Audio8 and over 300 s on Kitten2 for a long text). The request timing moved from `@app.middleware("http")` to a plain ASGI middleware (`Measure` in `src/disconnect.py`), because the decorator form hides a hang-up from `request.is_disconnected()`; metrics are unchanged.
+- Admin page: a closeable warning on the Overview appears while no weights are downloaded, with a button to the Updates page. While **Download new weights** runs, the Updates card shows a progress bar with megabytes downloaded (`progress` in `GET /admin/updates`; new shared `src/progress.py`). Replicas share the numbers through a small file next to the weights marker; where that folder is not shared (Ollama services) the bar shows on the replica doing the download.
 
 - Fix: a caller that hangs up before the first piece of speech is ready now stops the generation after the piece being made, instead of speaking the whole text for nobody (a following call waited 87 s on Audio8 and over 300 s on Kitten2 for a long text). The request timing moved from `@app.middleware("http")` to a plain ASGI middleware (`Measure` in `src/disconnect.py`), because the decorator form hides a hang-up from `request.is_disconnected()`; metrics are unchanged.
 
