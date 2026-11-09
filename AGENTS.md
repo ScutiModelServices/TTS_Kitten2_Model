@@ -8,7 +8,7 @@ This file is the one instruction file for every coding agent; `CLAUDE.md` only i
 ## Commands (from this folder, venv `.venv`, managed by uv)
 - Install: `uv sync` (`winget install astral-sh.uv` if uv is missing)
 - Test: `uv run pytest -q`. `tests/test_admin_ui.py` needs Playwright and its browser and is skipped without it. On Windows, if uv fails with "cannot move the file to a different disk drive", set `UV_CACHE_DIR` to a folder on the same drive and `UV_LINK_MODE=copy`.
-- Run: `run.bat run`, or `uv run python src/app.py` with `PYTHONUTF8=1` set (add `--dotenv` to load `.env`), or `docker compose up -d --build`
+- Run: `run.bat run`, or `uv run python src/app.py` with `PYTHONUTF8=1` set (add `--dotenv` to load `.env.local` and `.env`), or `docker compose --env-file .env.compose up -d --build`
 
 ## Rules
 - Load downloaded weights only. Startup, warm-up and inference must never download; missing weights keep health/admin available and inference returns 503 with an admin Updates Download hint. Only the Updates Download callback accesses the network for weights.
@@ -20,5 +20,5 @@ This file is the one instruction file for every coding agent; `CLAUDE.md` only i
 - The cache keeps only seeded calls. A non-streamed call joins the model's chunks (about 380 characters each); a stream sends them untrimmed, one per chunk.
 - CUDA torch (`cu126`, `torch==2.7.1`, same wheel as TTS_Audio8_Model); `device` setting default `auto` = cuda when a GPU is visible, else cpu. Compose reserves one NVIDIA GPU. Measured on CPU only (Ryzen 7 7445HS, 6 cores, bf16): 5.7 GB resident after load, 6.1 GB peak, 0.1 to 0.2 times real time; GPU speed and VRAM not measured. Tests use a fake model.
 - Behaviour changes update `README.md`, `deployment.md`, `docs/guide-web-ui.md`, `.env.example` and `CHANGELOG.md` in the same commit.
-- Never read or print `.env`, `tokens.json` or `settings.json`.
+- Never read or print `.env`, `.env.local`, `.env.compose`, `tokens.json` or `settings.json`.
 - Commit with the noreply author email `214214011+scutiii2@users.noreply.github.com` (another address is rejected on push). Push `main`, then run `python tools/publish_live.py`. Build Docker only when the Dockerfile or the dependencies changed.
