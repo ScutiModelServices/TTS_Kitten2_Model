@@ -149,6 +149,27 @@ def test_settings_can_be_saved_and_reset(page):
     sync_api.expect(page.locator("#setting-max_inflight")).to_have_value("0")
 
 
+def test_voice_card_adds_and_deletes_a_cloned_voice(page):
+    page.fill("#admin", PASSWORD)
+    page.click("#signin-button")
+    sync_api.expect(page.locator("#voices-card")).to_be_visible()  # CONFIG.tags has voice-cloning
+    page.fill("#voice-name", "anna")
+    page.set_input_files("#voice-file", files=[{"name": "a.wav", "mimeType": "audio/wav", "buffer": b"RIFF\x00\x00\x00\x00WAVEfmt "}])
+    page.fill("#voice-text", "What the clip says.")
+    page.click("#voice-add")
+    sync_api.expect(page.locator("#voice-note")).to_have_text("Saved voice anna.")
+    sync_api.expect(page.locator("#voice-list li", has_text="anna")).to_be_visible()
+    page.get_by_role("button", name="Delete voice anna").click()
+    sync_api.expect(page.locator("#voice-list li", has_text="anna")).to_have_count(0)
+
+
+def test_license_note_follows_the_tag(page):
+    page.fill("#admin", PASSWORD)
+    page.click("#signin-button")
+    sync_api.expect(page.locator("#license-note")).to_be_visible()  # Kitten2 has license-restricted
+    sync_api.expect(page.locator("#gpu-note")).to_be_hidden()  # and is tagged cpu
+
+
 def _open_playground(page):
     """Use separate admin and public credentials."""
     page.fill("#admin", PASSWORD)

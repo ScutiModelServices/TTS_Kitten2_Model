@@ -164,6 +164,16 @@ def test_voices_are_added_and_removed_with_the_admin_password_and_used_at_once(t
     assert c.post("/v1/speak", json={**BODY, "voice": "anna"}, headers=use).status_code == 404
 
 
+def test_admin_lists_voices_with_their_origin(tmp_path):
+    c = client(make_engine(), admin_password="admin", tokens=TokenStore(tmp_path / "t.json"))
+    assert c.get("/admin/voices").status_code == 401
+    c.put("/admin/voices/anna", json=CLIP, headers=ADMIN)
+    data = c.get("/admin/voices", headers=ADMIN).json()
+    assert {v["name"]: v["cloned"] for v in data["voices"]}["anna"] is True
+    assert [v["name"] for v in data["voices"] if not v["cloned"]]  # built-in (or "none") voices cannot be deleted
+    assert data["default"]
+
+
 def test_bad_voice_uploads_are_422(tmp_path):
     engine = make_engine()
     c = client(engine, admin_password="admin", tokens=TokenStore(tmp_path / "t.json"))

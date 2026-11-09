@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Admin page: `CONFIG.tags` (same tags as `docs/purpose.md`) switch tag-driven notes: `gpu` shows a CPU-threads note, `license-restricted` shows a licence note on the Updates card.
+
+- Admin page: **Cloned voices** card (add, list, delete) and `GET /admin/voices` (admin password; each voice with `cloned` true or false). The page shows it because `CONFIG.tags` in `web/index.html` holds `voice-cloning`; `purpose_audit.py` checks that `CONFIG.tags` equals the tags in `docs/purpose.md`.
+
 - Fix: after Download, a CPU threads change or a sync from another replica drops the loaded model, the service now reloads it in the background (when "Load the model at start" is on) instead of showing "Starting" on `/admin/` until the first request.
 - `POST /v1/speak` accepts a one-call cloned voice: `reference_audio_base64` + `reference_text` instead of `voice`. The clip lives in a temp file only while the speech is made, is deleted when the call ends, fails or is closed (streams too), is never stored in the voices volume, and its answers are never cached. `X-Voice` is `custom`; a token limited to certain voices gets 403. The audio may be a `data:` URL; the admin **Try it** panel has fields for it. Same change in TTS_Audio8_Model.
 

@@ -296,6 +296,12 @@ def create_app(client: Kitten2Engine | None = None, admin_password: str | None =
 
         return StreamingResponse(chunks(), media_type="audio/wav", headers={"X-Voice": name, "X-Seed": str(seed), "X-Cache": "miss"})
 
+    @app.get("/admin/voices", dependencies=[Depends(admin)])
+    def admin_voices() -> dict[str, Any]:
+        """Every voice with its origin, for the admin page: cloned ones can be deleted, the others cannot."""
+        cloned = set(voices.names())
+        return {"voices": [{"name": name, "cloned": name in cloned} for name in client.voices], "default": client.default_voice}
+
     @app.put("/admin/voices/{name}", dependencies=[Depends(admin)])
     def put_voice(name: str, body: VoiceUpload) -> dict[str, Any]:
         """Adds or replaces a voice: a WAV clip of a few seconds and exactly what it says. Every replica sees it at once.

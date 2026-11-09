@@ -93,7 +93,7 @@ When you create a token you can list the voices it may use (comma separated, the
 
 ## Adding voices
 
-The page has no voice card yet. Add a voice with the admin password (`X-Internal-Token`): a WAV clip of a few seconds (at most 10 MB) and exactly what it says.
+The **Cloned voices** card lists every voice, deletes cloned ones and adds a new one from a WAV clip and its transcript. The same works with the admin password (`X-Internal-Token`): a WAV clip of a few seconds (at most 10 MB) and exactly what it says.
 
 ```bash
 curl -X PUT http://127.0.0.1:29323/admin/voices/anna -H "X-Internal-Token: $SERVICE_ADMIN_PASSWORD" -H "Content-Type: application/json" \n  -d "{\"transcript\": \"What the clip says.\", \"audio_base64\": \"$(base64 -w0 anna.wav)\"}"
