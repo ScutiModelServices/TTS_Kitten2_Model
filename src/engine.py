@@ -146,7 +146,11 @@ def _download(model_id: str, revision: str, weights: str, decoder: str) -> None:
     from kittenml.get_model import _kitten2_files
 
     config = json.loads(Path(hf_hub_download(model_id, "config.json", revision=revision, token=False)).read_text("utf-8"))
-    snapshot_download(model_id, revision=revision, allow_patterns=_kitten2_files(config, decoder, weights), token=False)
+    from progress import hub_blobs, hub_total, tracking
+
+    patterns = _kitten2_files(config, decoder, weights)
+    with tracking(model_id, hub_total(model_id, revision, patterns), hub_blobs(model_id)):
+        snapshot_download(model_id, revision=revision, allow_patterns=patterns, token=False)
 
 
 def default_marker() -> Path:
