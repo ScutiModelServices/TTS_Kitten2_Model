@@ -54,7 +54,7 @@ The tests use a fake model. Before relying on a new revision, run the real model
 
 ## Limits worth knowing
 
-- **Heavy on a CPU.** Measured on a Ryzen 7 7445HS (6 physical cores, 15 GB RAM), torch default threads, bf16, `packed` weights: 5.7 GB resident after loading, 6.1 GB peak, under a minute to load from a warm disk cache. Speech took about 9 s for 1.1 s of audio, 44 s for 6.8 s and 65 s for 10 s (0.1 to 0.2 times real time). A small CPU will be slower and may not fit the memory. The model card names a llama.cpp fork (`kitten-tts-2-cpp`, GGUF files in the repository's `cpp/` folder) as the fastest CPU route; this service does not use it. Measured on an RTX 4050 Laptop GPU (6 GB), `device=cuda`, voice `Bruno` (2026-11-09): 0.8 to 0.9 times real time (8 s of work for 7.3 s of audio) and 5.6 GiB of VRAM in use, which leaves almost no room on a 6 GB card, so run one replica. A voice cloned from a real 7 s clip through the admin Cloned voices card was used for speech at once. Not measured: the Docker image size and a CPU-only host without the CUDA build.
+- **Heavy on a CPU.** Measured on a Ryzen 7 7445HS (6 physical cores, 15 GB RAM), torch default threads, bf16, `packed` weights: 5.7 GB resident after loading, 6.1 GB peak, under a minute to load from a warm disk cache. Speech took about 9 s for 1.1 s of audio, 44 s for 6.8 s and 65 s for 10 s (0.1 to 0.2 times real time). A small CPU will be slower and may not fit the memory. The model card names a llama.cpp fork (`kitten-tts-2-cpp`, GGUF files in the repository's `cpp/` folder) as the fastest CPU route; this service does not use it. Measured on an RTX 4050 Laptop GPU (6 GB), `device=cuda`, voice `Bruno` (2026-11-09): about 0.9 times real time for sentences of 7 to 10 s of audio, but 1.5 to 1.7 times (40 to 49 s of work for 27 to 28 s of audio) for a text of about 330 characters, and 5.8 GiB of VRAM at the peak, which leaves almost no room on a 6 GB card, so run one replica. A voice cloned from a real 7 s clip through the admin Cloned voices card was used for speech at once. Not measured: the Docker image size and a CPU-only host without the CUDA build.
 - One generation at a time per replica; extra calls wait, and more than the in-flight cap get 429. The rate limit is per replica.
 - The `packed` weights (954 MB) are lossless; `emb4` (469 MB) is smaller on disk but has a lossy embedding; `full` (3.5 GB) is plain bf16. The `student_w4` decoder is smaller, not faster. Memory in use was not compared across them.
 - Output is WAV only. Convert on the caller's side for MP3.
@@ -77,3 +77,17 @@ Speak sends text, voice, seed, temperature, preset and normalize to `POST /v1/sp
 - [Docker on this PC](docs/guide-docker-same-device.md)
 - [Run without Docker](docs/guide-no-docker-same-device.md)
 - [Test it from the command line](docs/guide-cli.md)
+
+## Admin pages and navigation
+
+Open `/admin/` and sign in. Overview opens first; each sidebar destination has its own URL fragment and supports browser Back/Forward and direct links:
+
+- `#overview`: health, model readiness, replicas, active tokens and request counts.
+- `#playground`: service-specific request forms and streamed or media responses.
+- `#tokens`: create, edit, expire and revoke scoped access tokens.
+- `#runtime`: CPU threads where supported, replica information and live/restart settings.
+- `#updates`: check versions and explicitly download weights.
+- `#connections`: caller addresses and public endpoints.
+- `#models` and `#voices`: project models and cloned voices, shown only when supported.
+
+Collapse/Expand switches between labeled sidebar and icon rail on desktop and mobile. The non-secret sidebar preference is saved per service in this browser. Navigation preserves form drafts and active Playground requests; sign-out still clears credentials and cancels work. Page names appear once in the main header. No preview data or cross-service selector ships in the real admin UI. Existing authentication, quotas, settings precedence and explicit-download policy remain in effect.
