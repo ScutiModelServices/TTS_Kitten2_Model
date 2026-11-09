@@ -1,0 +1,46 @@
+[project]
+name = "tts_kitten2_model"
+description = "One HTTP service that runs KittenTTS 2 text to speech with voice cloning on the GPU or CPU for every project"
+version = "0.1.0"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.11"
+dependencies = [
+    "python-dotenv==1.2.2",
+    "fastapi>=0.115",
+    "uvicorn>=0.30",
+    "kittenml==0.9.4",  # the model's own package (Apache 2.0); the weights are under the Stellon Labs Community License
+    "huggingface-hub",
+    "numpy>=1.26",
+    # Pinned like TTS_Audio8_Model, so both services reuse one cached CUDA wheel; kittenml needs >=2.6.
+    "torch==2.7.1",
+    "torchaudio==2.7.1",
+]
+
+[dependency-groups]
+dev = ["pytest>=8.0", "httpx>=0.27", "playwright>=1.40"]
+
+[tool.uv]
+package = false  # runs from src/, only the dependencies are installed
+
+# CUDA torch (cu126, the CUDA libraries come with the wheel; about 4.5 GB). It also runs on the CPU: device `auto` picks
+# the GPU when one is visible, else the CPU.
+[tool.uv.sources]
+torch = { index = "pytorch-cu126" }
+torchaudio = { index = "pytorch-cu126" }
+
+[[tool.uv.index]]
+name = "pytorch-cu126"
+url = "https://download.pytorch.org/whl/cu126"
+explicit = true
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+bypass-selection = true  # runs from src/, installs only the dependencies
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
