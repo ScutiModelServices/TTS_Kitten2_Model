@@ -10,6 +10,7 @@ name: tts_kitten2_model
 
 services:
   tts_kitten2_model:
+    extra_hosts: ["host.docker.internal:host-gateway"]  # reaches services published on the host
     build: .
     image: tts_kitten2_model:latest
     restart: unless-stopped
